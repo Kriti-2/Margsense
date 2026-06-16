@@ -7,6 +7,7 @@ import pandas as pd
 from app.config import get_settings
 from app.data.loader import get_data_store
 from app.models.congestion_fingerprint import CongestionFingerprintEngine, CongestionInput
+from app.services.analytics_service import build_analytics_response
 from app.services.corridors_service import build_corridors_response
 from app.services.live_buffer import get_live_buffer
 from app.services.severity_service import build_severity_response
@@ -84,6 +85,15 @@ class RealtimeEngine:
         severity = build_severity_response(recent, limit=30)
         ref = get_reference_time(store.load(), use_wall_clock=settings.live_mode)
 
+        analytics = build_analytics_response(
+            store.load(),
+            zone_speeds=speeds,
+            recent_df=recent,
+            reference=ref,
+            live=True,
+            traffic_meta=_traffic_service.last_meta,
+        )
+
         payload = {
             "type": "live_tick",
             "timestamp": ts.isoformat(),
@@ -102,6 +112,7 @@ class RealtimeEngine:
             "zone_intensity": zone_intensity,
             "congestion_fingerprints": congestion,
             "corridors": corridors,
+            "analytics": analytics,
             "severity_summary": severity.get("summary", {}),
             "severity_queue": severity.get("queue", [])[:8],
             "new_violations": [
@@ -117,7 +128,15 @@ class RealtimeEngine:
         }
 
         self._last_tick = payload
-        store.refresh_live_caches(recent, zone_intensity, corridors, severity)
+        store.refresh_live_caches(
+            recent,
+            zone_intensity,
+            corridors,
+            severity,
+            zone_speeds=speeds,
+            traffic_meta=_traffic_service.last_meta,
+            reference=ref,
+        )
         return payload
 
     def get_status(self) -> dict[str, Any]:

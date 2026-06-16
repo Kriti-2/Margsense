@@ -80,22 +80,36 @@ class ViolationDataStore:
         from app.services.heatmap_service import build_heatmap_response
         from app.services.severity_service import build_severity_response
         from app.services.corridors_service import build_corridors_response
+        from app.services.live_buffer import get_live_buffer
+        from app.services.realtime_engine import get_realtime_engine
+        from app.services.traffic_service import TrafficService
+        from app.utilities.time_context import get_reference_time
 
         forecaster = ParkPredictForecaster(use_prophet=False)
         self._forecast_cache = forecaster.forecast(df)
 
-        self._analytics_cache = build_analytics_response(df)
+        get_live_buffer().configure_replay_pool(df)
+        rt = get_realtime_engine()
+        recent = rt.recent_window(hours=24)
+        traffic = TrafficService()
+        speeds = traffic.get_zone_speeds(recent)
+        ref = get_reference_time(df, use_wall_clock=True)
+
+        self._analytics_cache = build_analytics_response(
+            df,
+            zone_speeds=speeds,
+            recent_df=recent,
+            reference=ref,
+            live=True,
+            traffic_meta=traffic.last_meta,
+        )
         self._recidivism_cache = self._build_recidivism_response(df)
         self._shift_planner_cache = build_shift_planner_response(df, self._forecast_cache)
-        self._heatmap_cache = build_heatmap_response(df, limit=1500)
-        self._severity_cache = build_severity_response(df, limit=30)
-        self._corridors_cache = build_corridors_response(df)
+        self._heatmap_cache = build_heatmap_response(df, limit=1500, zone_intensity=None, zone_speeds=speeds)
+        self._severity_cache = build_severity_response(recent if not recent.empty else df, limit=30)
+        self._corridors_cache = build_corridors_response(recent if not recent.empty else df, recent_only=False)
         self._caches_warmed = True
         logger.info("API caches warmed successfully")
-
-        from app.services.live_buffer import get_live_buffer
-
-        get_live_buffer().configure_replay_pool(df)
 
     def get_forecast(self):
         if self._forecast_cache is None:
@@ -146,28 +160,36 @@ class ViolationDataStore:
         zone_intensity: dict,
         corridors: dict,
         severity: dict,
+        zone_speeds: dict[str, float] | None = None,
+        traffic_meta: dict | None = None,
+        reference: pd.Timestamp | None = None,
     ) -> None:
-        """Update caches with live traffic and violation window without full rebuild."""
-        from datetime import datetime
-
+        """Update caches with live traffic and violation window."""
+        from app.services.analytics_service import build_analytics_response
         from app.services.heatmap_service import build_heatmap_response
+        from app.utilities.time_context import get_reference_time
 
+        full_df = self.load()
+        speeds = zone_speeds or {
+            zone: meta.get("current_speed_kmh", 20.0) for zone, meta in zone_intensity.items()
+        }
+        ref = reference or get_reference_time(full_df, use_wall_clock=True)
+
+        self._analytics_cache = build_analytics_response(
+            full_df,
+            zone_speeds=speeds,
+            recent_df=recent_df,
+            reference=ref,
+            live=True,
+            traffic_meta=traffic_meta,
+        )
         self._corridors_cache = corridors
         self._severity_cache = severity
         self._heatmap_cache = build_heatmap_response(
-            recent_df if not recent_df.empty else self.load(),
+            recent_df if not recent_df.empty else full_df,
             limit=1500,
             zone_intensity=zone_intensity,
         )
-        if self._analytics_cache:
-            self._analytics_cache = {
-                **self._analytics_cache,
-                "generated_at": datetime.utcnow().isoformat(),
-            }
-            if "kpis" in self._analytics_cache:
-                self._analytics_cache["kpis"]["active_hotspots"] = sum(
-                    1 for z in zone_intensity.values() if z.get("congestion_score", 0) >= 50
-                )
 
     @staticmethod
     def _build_recidivism_response(df: pd.DataFrame) -> dict:

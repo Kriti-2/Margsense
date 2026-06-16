@@ -62,6 +62,8 @@ UI: http://localhost:5173
 
 **Live mode:** See [backend/LIVE.md](backend/LIVE.md) — real Bengaluru violations stream + optional Google Maps/TomTom traffic.
 
+**Production roadmap:** [backend/PRODUCTION.md](backend/PRODUCTION.md)
+
 - **Frontend:** React 18, Vite, Tailwind CSS, Recharts, Axios, React Router, Leaflet
 - **Backend:** Python, FastAPI, Pandas, NumPy, Prophet, Scikit-Learn, SQLite, APScheduler
 

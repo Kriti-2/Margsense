@@ -1,16 +1,29 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from 'recharts';
 import { api } from '../api/client';
+import { useLiveFeed } from '../hooks/useLiveFeed';
 import CongestionDebt from '../components/CongestionDebt';
 import TimeLapse from '../components/TimeLapse';
+import LiveStatusBar from '../components/LiveStatusBar';
 
 const PIE_COLORS = ['#3b82f6', '#ef4444', '#f59e0b', '#10b981', '#8b5cf6', '#ec4899'];
 
 export default function Analytics() {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [lastTick, setLastTick] = useState(null);
+
+  const handleLiveTick = useCallback((payload) => {
+    if (payload.type !== 'live_tick') return;
+    setLastTick(payload);
+    if (payload.analytics) {
+      setAnalytics(payload.analytics);
+    }
+  }, []);
+
+  const { connected, status } = useLiveFeed(handleLiveTick);
 
   useEffect(() => {
     api.getAnalytics().then((res) => {
@@ -20,7 +33,7 @@ export default function Analytics() {
   }, []);
 
   if (loading) {
-    return <div className="text-center text-gray-400">Loading analytics...</div>;
+    return <div className="text-center text-gray-400">Loading live analytics...</div>;
   }
 
   const congestionData = analytics?.congestion_fingerprints?.map((c) => ({
@@ -37,15 +50,30 @@ export default function Analytics() {
   })) || [];
 
   const zoneBreakdown = analytics?.zone_breakdown || [];
+  const scopeLabel = analytics?.zone_breakdown_scope === 'last_24h' ? 'Last 24 hours (live)' : 'All time';
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-white">Analytics & Economic Impact</h2>
-        <p className="mt-1 text-sm text-command-muted">
-          Congestion fingerprinting, economic loss quantification, and policy recommendations
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-white">Analytics & Economic Impact</h2>
+          <p className="mt-1 text-sm text-command-muted">
+            Live congestion fingerprinting and economic loss from real Bengaluru violation data
+          </p>
+        </div>
+        <LiveStatusBar connected={connected} status={status} lastTick={lastTick} />
       </div>
+
+      {analytics?.data_sources && (
+        <div className="flex flex-wrap gap-4 rounded-lg border border-command-border bg-command-panel px-4 py-3 text-xs text-gray-400">
+          <span>Violations: <strong className="text-gray-200">{analytics.data_sources.violations}</strong></span>
+          <span>Traffic: <strong className="text-gray-200">{analytics.data_sources.traffic?.source || '—'}</strong></span>
+          <span>Zone breakdown: <strong className="text-gray-200">{scopeLabel}</strong></span>
+          {analytics.reference_time && (
+            <span>Reference: <strong className="text-gray-200">{new Date(analytics.reference_time).toLocaleString()}</strong></span>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <div className="xl:col-span-2">
@@ -57,7 +85,7 @@ export default function Analytics() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="rounded-xl border border-command-border bg-command-panel p-6">
           <h3 className="text-lg font-semibold text-white">Congestion Fingerprints</h3>
-          <p className="text-sm text-command-muted">Speed drop % by corridor</p>
+          <p className="text-sm text-command-muted">Live speed drop % by corridor</p>
           <div className="mt-4 h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={congestionData}>
@@ -73,6 +101,7 @@ export default function Analytics() {
 
         <div className="rounded-xl border border-command-border bg-command-panel p-6">
           <h3 className="text-lg font-semibold text-white">Violation Distribution</h3>
+          <p className="text-sm text-command-muted">{scopeLabel}</p>
           <div className="mt-4 h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -99,6 +128,7 @@ export default function Analytics() {
 
       <div className="rounded-xl border border-command-border bg-command-panel p-6">
         <h3 className="text-lg font-semibold text-white">Economic Loss Breakdown</h3>
+        <p className="text-sm text-command-muted">Derived from live congestion + violation density</p>
         <div className="mt-4 h-64">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={economicData}>
@@ -117,6 +147,7 @@ export default function Analytics() {
       {analytics?.policy_recommendations && (
         <div className="rounded-xl border border-command-border bg-command-panel p-6">
           <h3 className="text-lg font-semibold text-white">Policy Recommendations</h3>
+          <p className="text-sm text-command-muted">Updated from live rankings every 30s</p>
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
             {analytics.policy_recommendations.map((rec, i) => (
               <div key={i} className="rounded-lg border border-command-border bg-command-bg p-4">
