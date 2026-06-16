@@ -2,6 +2,7 @@ import json
 import logging
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 
@@ -13,10 +14,18 @@ logger = logging.getLogger(__name__)
 
 
 class ViolationDataStore:
-    """Load and cache Bengaluru parking violation dataset."""
+    """Load and cache Bengaluru parking violation dataset and derived API responses."""
 
     _instance: "ViolationDataStore | None" = None
     _df: pd.DataFrame | None = None
+    _forecast_cache: Any = None
+    _analytics_cache: dict | None = None
+    _recidivism_cache: dict | None = None
+    _shift_planner_cache: dict | None = None
+    _heatmap_cache: dict | None = None
+    _severity_cache: dict | None = None
+    _corridors_cache: dict | None = None
+    _caches_warmed: bool = False
 
     def __new__(cls):
         if cls._instance is None:
@@ -24,6 +33,9 @@ class ViolationDataStore:
         return cls._instance
 
     def load(self, force_reload: bool = False) -> pd.DataFrame:
+        if force_reload:
+            self._clear_derived_caches()
+
         if self._df is not None and not force_reload:
             return self._df
 
@@ -44,6 +56,103 @@ class ViolationDataStore:
         self._df = self._generate_mock_data()
         return self._df
 
+    def _clear_derived_caches(self) -> None:
+        self._forecast_cache = None
+        self._analytics_cache = None
+        self._recidivism_cache = None
+        self._shift_planner_cache = None
+        self._heatmap_cache = None
+        self._severity_cache = None
+        self._corridors_cache = None
+        self._caches_warmed = False
+
+    def warm_caches(self) -> None:
+        """Precompute expensive API responses once at startup (or on scheduled refresh)."""
+        if self._caches_warmed:
+            return
+
+        logger.info("Warming API caches (forecast, analytics, recidivism, shift-planner)...")
+        df = self.load()
+
+        from app.models.forecaster import ParkPredictForecaster
+        from app.services.analytics_service import build_analytics_response
+        from app.services.shift_planner import build_shift_planner_response
+        from app.services.heatmap_service import build_heatmap_response
+        from app.services.severity_service import build_severity_response
+        from app.services.corridors_service import build_corridors_response
+
+        forecaster = ParkPredictForecaster(use_prophet=False)
+        self._forecast_cache = forecaster.forecast(df)
+
+        self._analytics_cache = build_analytics_response(df)
+        self._recidivism_cache = self._build_recidivism_response(df)
+        self._shift_planner_cache = build_shift_planner_response(df, self._forecast_cache)
+        self._heatmap_cache = build_heatmap_response(df, limit=1500)
+        self._severity_cache = build_severity_response(df, limit=30)
+        self._corridors_cache = build_corridors_response(df)
+
+        self._caches_warmed = True
+        logger.info("API caches warmed successfully")
+
+    def get_forecast(self):
+        if self._forecast_cache is None:
+            self.warm_caches()
+        return self._forecast_cache
+
+    def get_analytics(self) -> dict:
+        if self._analytics_cache is None:
+            self.warm_caches()
+        return self._analytics_cache
+
+    def get_recidivism(self) -> dict:
+        if self._recidivism_cache is None:
+            self.warm_caches()
+        return self._recidivism_cache
+
+    def get_shift_planner(self) -> dict:
+        if self._shift_planner_cache is None:
+            self.warm_caches()
+        return self._shift_planner_cache
+
+    def get_heatmap(self, limit: int = 1500) -> dict:
+        from app.services.heatmap_service import build_heatmap_response
+
+        if self._heatmap_cache is None:
+            self.warm_caches()
+        if limit == 1500:
+            return self._heatmap_cache
+        return build_heatmap_response(self.load(), limit=limit)
+
+    def get_severity_queue(self, limit: int = 30) -> dict:
+        from app.services.severity_service import build_severity_response
+
+        if self._severity_cache is None:
+            self.warm_caches()
+        if limit == 30:
+            return self._severity_cache
+        return build_severity_response(self.load(), limit=limit)
+
+    def get_corridors(self) -> dict:
+        if self._corridors_cache is None:
+            self.warm_caches()
+        return self._corridors_cache
+
+    @staticmethod
+    def _build_recidivism_response(df: pd.DataFrame) -> dict:
+        from datetime import datetime
+
+        from app.services.recidivism_engine import RecidivismHeatmapEngine
+
+        engine = RecidivismHeatmapEngine()
+        zones = engine.analyze(df)
+        stubborn = [z for z in zones if z.is_stubborn_zone]
+        return {
+            "generated_at": datetime.utcnow().isoformat(),
+            "zones": [z.model_dump() for z in zones],
+            "stubborn_zone_count": len(stubborn),
+            "threshold_pct": engine.STUBBORN_THRESHOLD * 100,
+        }
+
     def _enrich(self, df: pd.DataFrame) -> pd.DataFrame:
         df = df.copy()
         df["latitude"] = pd.to_numeric(df["latitude"], errors="coerce")
@@ -56,6 +165,8 @@ class ViolationDataStore:
         df["near_intersection"] = df.get("junction_name", "No Junction").apply(
             lambda j: isinstance(j, str) and j.strip().lower() != "no junction"
         )
+        if "created_datetime" in df.columns:
+            df["created_datetime"] = pd.to_datetime(df["created_datetime"], utc=True, errors="coerce")
         return df
 
     @staticmethod

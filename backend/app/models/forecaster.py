@@ -13,8 +13,11 @@ logger = logging.getLogger(__name__)
 class ParkPredictForecaster:
     """Prophet-based violation hotspot forecasting for next 24 hours."""
 
-    def __init__(self):
+    def __init__(self, use_prophet: bool = False):
+        """use_prophet=False uses fast statistical model (recommended for API serving)."""
         self._prophet_enabled = False
+        if not use_prophet:
+            return
         try:
             from prophet import Prophet
 

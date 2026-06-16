@@ -25,6 +25,7 @@ def _refresh_data_cache():
     logger.info("Scheduled data cache refresh")
     store = get_data_store()
     store.load(force_reload=True)
+    store.warm_caches()
 
 
 @asynccontextmanager
@@ -33,7 +34,9 @@ async def lifespan(app: FastAPI):
     logging.basicConfig(level=logging.DEBUG if settings.debug else logging.INFO)
 
     logger.info("Starting %s — preloading violation dataset", settings.app_name)
-    get_data_store().load()
+    store = get_data_store()
+    store.load()
+    store.warm_caches()
 
     scheduler.add_job(_refresh_data_cache, "interval", hours=6, id="data_refresh")
     scheduler.start()

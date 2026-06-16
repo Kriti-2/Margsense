@@ -1,7 +1,16 @@
-from app.models.responses import ShiftAssignment
+from datetime import datetime
+
+import pandas as pd
+
+from app.models.congestion_fingerprint import CongestionFingerprintEngine
+from app.models.economic import ZoneCongestionMetrics
 from app.models.forecast_schemas import ForecastResponse
+from app.models.responses import ShiftAssignment
 from app.models.economic import EconomicLossResult
-from app.models.severity_schemas import SeverityLevel, ViolationSeverityResult
+from app.models.severity_classifier import ViolationSeverityClassifier
+from app.models.severity_schemas import SeverityLevel, ViolationSeverityInput, ViolationSeverityResult
+from app.services.economic_calculator import EconomicCalculator
+from app.utilities.constants import BENGALURU_ZONES
 
 
 class ShiftPlannerService:
@@ -54,3 +63,56 @@ class ShiftPlannerService:
         priority_order = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3}
         assignments.sort(key=lambda a: priority_order[a.priority])
         return assignments
+
+
+def build_shift_planner_response(df: pd.DataFrame, predictions: ForecastResponse) -> dict:
+    engine = CongestionFingerprintEngine()
+    congestion = engine.compute_all_corridors()
+    econ = EconomicCalculator()
+    zone_metrics = [
+        ZoneCongestionMetrics(
+            zone=fp.corridor,
+            vehicles_affected=max(int(fp.speed_drop_pct * 12), 15),
+            delay_minutes=round(fp.speed_drop_pct * 0.4, 1),
+        )
+        for fp in congestion
+    ]
+    economic_losses = econ.calculate_all_zones(zone_metrics)
+
+    classifier = ViolationSeverityClassifier()
+    severity_results: list[ViolationSeverityResult] = []
+    if not df.empty:
+        sample = df.head(100)
+        for _, row in sample.iterrows():
+            ts = row.get("created_datetime")
+            hour = pd.to_datetime(ts).hour if pd.notna(ts) else 12
+            zone = row.get("zone", "Unknown")
+            severity_results.append(
+                classifier.classify(
+                    ViolationSeverityInput(
+                        violation_id=str(row.get("id", "")),
+                        zone=zone,
+                        vehicle_type=str(row.get("vehicle_type", "CAR")),
+                        lane_width_m=BENGALURU_ZONES.get(zone, {}).get("lane_width_m", 7.0),
+                        hour=int(hour),
+                        near_intersection=bool(row.get("near_intersection", False)),
+                        violation_types=row.get("violation_types", []),
+                    )
+                )
+            )
+
+    planner = ShiftPlannerService()
+    assignments = planner.plan(predictions, economic_losses, severity_results)
+    total_officers = sum(a.officers_recommended for a in assignments)
+
+    return {
+        "generated_at": datetime.utcnow().isoformat(),
+        "assignments": [a.model_dump() for a in assignments],
+        "summary": {
+            "total_officers_recommended": total_officers,
+            "critical_zones": sum(1 for a in assignments if a.priority == "CRITICAL"),
+            "high_priority_zones": sum(1 for a in assignments if a.priority == "HIGH"),
+            "total_expected_violations": sum(a.expected_violations for a in assignments),
+            "total_economic_impact_inr": round(sum(a.economic_impact_inr for a in assignments), 2),
+        },
+    }
