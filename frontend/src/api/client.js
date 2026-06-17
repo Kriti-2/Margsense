@@ -8,7 +8,19 @@ const client = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+export function setAuthToken(token) {
+  if (token) {
+    client.defaults.headers.common.Authorization = `Bearer ${token}`;
+  } else {
+    delete client.defaults.headers.common.Authorization;
+  }
+}
+
 export const api = {
+  login: (data) => client.post('/auth/login', data),
+  register: (data) => client.post('/auth/register', data),
+  getMe: () => client.get('/auth/me'),
+  getCongestionPreview: () => client.get('/public/congestion-preview'),
   getHeatmap: (limit = 2000) => client.get('/heatmap', { params: { limit } }),
   getAnalytics: () => client.get('/analytics'),
   getPredictions: () => client.get('/predictions'),
@@ -20,5 +32,7 @@ export const api = {
   getLiveStatus: () => client.get('/live/status'),
   ingestViolation: (data) => client.post('/ingest/violation', data),
 };
+
+export const getGoogleOAuthUrl = () => `${API_BASE}/auth/google/login`;
 
 export default client;

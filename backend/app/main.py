@@ -8,12 +8,15 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.data.loader import get_data_store
+from app.database import SessionLocal, init_db
 from app.routes import (
     analytics,
+    auth,
     corridors,
     heatmap,
     live,
     predictions,
+    public,
     recidivism,
     severity,
     shift_planner,
@@ -49,6 +52,16 @@ async def lifespan(app: FastAPI):
     logging.basicConfig(level=logging.DEBUG if settings.debug else logging.INFO)
 
     logger.info("Starting %s — preloading violation dataset", settings.app_name)
+
+    init_db()
+    db = SessionLocal()
+    try:
+        from app.routes.auth import seed_demo_users
+
+        seed_demo_users(db)
+    finally:
+        db.close()
+
     store = get_data_store()
     store.load()
     store.warm_caches()
@@ -103,6 +116,8 @@ def create_app() -> FastAPI:
     app.include_router(corridors.router)
     app.include_router(shift_planner.router)
     app.include_router(live.router)
+    app.include_router(auth.router)
+    app.include_router(public.router)
 
     @app.get("/")
     def root():
@@ -125,6 +140,10 @@ def create_app() -> FastAPI:
                 "/live/status",
                 "/live/ws",
                 "/ingest/violation",
+                "/auth/register",
+                "/auth/login",
+                "/auth/google/login",
+                "/public/congestion-preview",
             ],
         }
 

@@ -35,6 +35,15 @@ class Settings(BaseSettings):
     google_maps_api_key: str = ""
     tomtom_api_key: str = ""
 
+    jwt_secret: str = "change-me-in-production-use-long-random-string"
+    jwt_algorithm: str = "HS256"
+    jwt_expire_minutes: int = 60 * 24 * 7
+
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    google_redirect_uri: str = "http://localhost:8000/auth/google/callback"
+    frontend_url: str = "http://localhost:5173"
+
     live_mode: bool = True
     live_replay_enabled: bool = True
     live_replay_batch_size: int = 2
