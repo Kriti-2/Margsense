@@ -1,5 +1,5 @@
 import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import DashboardLayout from './layouts/DashboardLayout';
 import Dashboard from './pages/Dashboard';
@@ -16,6 +16,22 @@ import UserCongestion from './pages/UserCongestion';
 import UserLayout from './layouts/UserLayout';
 
 
+function CorridorsRoute() {
+  const { user } = useAuth();
+  if (user?.role === 'officer') {
+    return (
+      <DashboardLayout>
+        <Corridors />
+      </DashboardLayout>
+    );
+  }
+  return (
+    <UserLayout>
+      <Corridors />
+    </UserLayout>
+  );
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -24,6 +40,10 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
+
+          <Route element={<ProtectedRoute />}>
+            <Route path="/corridors" element={<CorridorsRoute />} />
+          </Route>
 
           <Route element={<ProtectedRoute userOnly />}>
             <Route element={<UserLayout />}>
@@ -37,7 +57,6 @@ export default function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/predict" element={<Predict />} />
               <Route path="/analytics" element={<Analytics />} />
-              <Route path="/corridors" element={<Corridors />} />
               <Route path="/shift-planner" element={<ShiftPlanner />} />
               <Route path="/monitor" element={<CameraMonitor />} />
             </Route>

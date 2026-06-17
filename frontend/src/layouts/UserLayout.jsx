@@ -4,7 +4,7 @@ import { useLiveFeed } from '../hooks/useLiveFeed';
 import { useState, useCallback } from 'react';
 import LiveStatusBar from '../components/LiveStatusBar';
 
-export default function UserLayout() {
+export default function UserLayout({ children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [lastTick, setLastTick] = useState(null);
@@ -60,6 +60,16 @@ export default function UserLayout() {
               >
                 Report Violation
               </NavLink>
+              <NavLink
+                to="/corridors"
+                className={({ isActive }) =>
+                  `rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    isActive ? 'bg-command-accent text-white font-medium' : 'text-gray-400 hover:text-white'
+                  }`
+                }
+              >
+                Emergency Corridors
+              </NavLink>
             </nav>
 
             <LiveStatusBar connected={connected} status={status} lastTick={lastTick} />
@@ -75,7 +85,7 @@ export default function UserLayout() {
         </div>
       </header>
       <main className="mx-auto max-w-6xl p-6">
-        <Outlet />
+        {children || <Outlet />}
       </main>
     </div>
   );
