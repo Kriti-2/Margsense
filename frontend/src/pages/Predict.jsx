@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { api } from '../api/client';
+import { useLiveFeed } from '../hooks/useLiveFeed';
 import HeatMap from '../components/HeatMap';
 import ShiftPlanner from '../components/ShiftPlanner';
+import LiveStatusBar from '../components/LiveStatusBar';
 
 const RISK_COLORS = ['#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e'];
 
@@ -11,6 +13,20 @@ export default function Predict() {
   const [shiftData, setShiftData] = useState(null);
   const [heatmap, setHeatmap] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [lastTick, setLastTick] = useState(null);
+
+  const handleLiveTick = useCallback((payload) => {
+    if (payload.type !== 'live_tick') return;
+    setLastTick(payload);
+
+    if (payload.zone_intensity) {
+      setHeatmap((prev) =>
+        prev ? { ...prev, zone_intensity: payload.zone_intensity, generated_at: payload.timestamp } : prev
+      );
+    }
+  }, []);
+
+  const { connected, status } = useLiveFeed(handleLiveTick);
 
   useEffect(() => {
     async function load() {
@@ -40,11 +56,14 @@ export default function Predict() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-white">ParkPredict — 24h Forecast</h2>
-        <p className="mt-1 text-sm text-command-muted">
-          Top 10 high-risk zones powered by Prophet time-series forecasting
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-white">ParkPredict — 24h Forecast</h2>
+          <p className="mt-1 text-sm text-command-muted">
+            Top 10 high-risk zones powered by Prophet time-series forecasting
+          </p>
+        </div>
+        <LiveStatusBar connected={connected} status={status} lastTick={lastTick} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">

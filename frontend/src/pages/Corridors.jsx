@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Polyline, CircleMarker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { api } from '../api/client';
+import { useLiveFeed } from '../hooks/useLiveFeed';
 import CorridorStatus from '../components/CorridorStatus';
 import RecidivismMap from '../components/RecidivismMap';
+import LiveStatusBar from '../components/LiveStatusBar';
 
 const BENGALURU_CENTER = [12.9716, 77.5946];
 
@@ -18,6 +20,18 @@ export default function Corridors() {
   const [corridors, setCorridors] = useState(null);
   const [recidivism, setRecidivism] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [lastTick, setLastTick] = useState(null);
+
+  const handleLiveTick = useCallback((payload) => {
+    if (payload.type !== 'live_tick') return;
+    setLastTick(payload);
+
+    if (payload.corridors) {
+      setCorridors(payload.corridors);
+    }
+  }, []);
+
+  const { connected, status } = useLiveFeed(handleLiveTick);
 
   useEffect(() => {
     Promise.all([api.getCorridors(), api.getRecidivism()]).then(([co, re]) => {
@@ -35,11 +49,14 @@ export default function Corridors() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-white">Green Corridor Protector</h2>
-        <p className="mt-1 text-sm text-command-muted">
-          Monitor emergency routes — MG Road, Silk Board, Whitefield corridors
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-white">Green Corridor Protector</h2>
+          <p className="mt-1 text-sm text-command-muted">
+            Monitor emergency routes — MG Road, Silk Board, Whitefield corridors
+          </p>
+        </div>
+        <LiveStatusBar connected={connected} status={status} lastTick={lastTick} />
       </div>
 
       <div className="h-96 overflow-hidden rounded-xl border border-command-border">
