@@ -215,6 +215,8 @@ class ViolationDataStore:
             if "violation_types" not in live.columns and "violation_type" in live.columns:
                 live["violation_types"] = live["violation_type"]
             combined_df = pd.concat([full_df, live], ignore_index=True)
+            # Ensure combined created_datetime is UTC timezone-aware
+            combined_df["created_datetime"] = pd.to_datetime(combined_df["created_datetime"], utc=True, errors="coerce")
         else:
             combined_df = full_df
 

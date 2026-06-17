@@ -82,7 +82,13 @@ def build_shift_planner_response(df: pd.DataFrame, predictions: ForecastResponse
     classifier = ViolationSeverityClassifier()
     severity_results: list[ViolationSeverityResult] = []
     if not df.empty:
-        sample = df.head(100)
+        if "created_datetime" in df.columns:
+            df = df.copy()
+            df["created_datetime"] = pd.to_datetime(df["created_datetime"], utc=True, errors="coerce")
+            # Sort descending to inspect the latest violations
+            sample = df.sort_values("created_datetime", ascending=False).head(100)
+        else:
+            sample = df.tail(100)
         for _, row in sample.iterrows():
             ts = row.get("created_datetime")
             hour = pd.to_datetime(ts).hour if pd.notna(ts) else 12
