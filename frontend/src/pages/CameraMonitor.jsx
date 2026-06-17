@@ -107,12 +107,8 @@ export default function CameraMonitor() {
     'CAM-03': [
       { id: 'p1', lane: 'parked', x: 18, y: 35, type: 'CAR', confidence: 97, isParked: true },
       { id: 'p2', lane: 'parked', x: 30, y: 35, type: 'CAR', confidence: 94, isParked: true },
-      { id: 'p3', lane: 'parked', x: 42, y: 35, type: 'CAR', confidence: 91, isParked: true },
-      { id: 'p4', lane: 'parked', x: 54, y: 35, type: 'AUTO', confidence: 89, isParked: true },
-      { id: 'p5', lane: 'parked', x: 66, y: 35, type: 'CAR', confidence: 95, isParked: true },
-      { id: 'p6', lane: 'parked', x: 22, y: 65, type: 'CAR', confidence: 93, isParked: true },
-      { id: 'p7', lane: 'parked', x: 46, y: 65, type: 'TRUCK', confidence: 92, isParked: true },
-      { id: 'p8', lane: 'parked', x: 58, y: 65, type: 'CAR', confidence: 96, isParked: true },
+      { id: 'p3', lane: 'parked', x: 54, y: 35, type: 'CAR', confidence: 89, isParked: true },
+      { id: 'p4', lane: 'parked', x: 46, y: 65, type: 'TRUCK', confidence: 92, isParked: true },
       { id: 'v1', lane: 'aisle', progress: 0, type: 'CAR', confidence: 95 }
     ],
     'CAM-04': [
@@ -198,7 +194,7 @@ export default function CameraMonitor() {
     const runInference = async () => {
       if (!isLoopActive) return;
 
-      const allowedClasses = ['car', 'motorcycle', 'bus', 'truck', 'person', 'bicycle'];
+      const allowedClasses = ['car', 'bus', 'truck'];
       const nextDetections = {};
 
       try {
@@ -221,14 +217,17 @@ export default function CameraMonitor() {
                 const wRatio = p.bbox[2] / vW;
                 const hRatio = p.bbox[3] / vH;
                 return allowedClasses.includes(p.class) &&
-                       p.score >= 0.50 &&
+                       p.score >= 0.65 &&
                        wRatio > minW && wRatio < maxW &&
                        hRatio > minH && hRatio < maxH;
               });
 
+              // Sort by confidence and slice to top 5 to keep views clean and visible
+              const cleanDetections = filtered.sort((a, b) => b.score - a.score).slice(0, 5);
+
               // Track IDs across frames for smooth transitions
               const prevDets = prevDetectionsRef.current[cam.id] || [];
-              const trackedDetections = filtered.map((p) => {
+              const trackedDetections = cleanDetections.map((p) => {
                 const x = (p.bbox[0] / vW) * 100;
                 const y = (p.bbox[1] / vH) * 100;
                 const width = (p.bbox[2] / vW) * 100;
