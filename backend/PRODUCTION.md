@@ -50,15 +50,17 @@ audit_logs          — who accessed what
 
 ## Phase 2 — Production backend (2–4 weeks)
 
-| Change | Why |
-|--------|-----|
-| **Authentication** | JWT + API keys for ingest; OAuth for officer dashboard |
-| **Rate limiting** | Protect ingest and public APIs |
-| **Celery workers** | Prophet retraining, heavy analytics off request path |
-| **Structured logging** | JSON logs → Datadog / CloudWatch |
-| **Health checks** | `/health` + DB + Redis + traffic API connectivity |
-| **Docker + CI/CD** | GitHub Actions → deploy to AWS/GCP/Azure |
-| **Secrets manager** | No API keys in `.env` files |
+| Change | Status |
+|--------|--------|
+| **Authentication** | ✅ JWT + API keys for ingest; officer JWT for shift-planner / severity / jobs |
+| **Rate limiting** | ✅ slowapi tiers (public / ingest / officer / auth) |
+| **Celery workers** | ✅ Prophet forecast + cache warming via `/jobs/*` |
+| **Structured logging** | ⏳ JSON logs → Datadog / CloudWatch |
+| **Health checks** | ✅ `/health` (+ DB + Redis in Docker smoke test) |
+| **Docker + CI/CD** | ✅ `docker-compose.yml` + GitHub Actions |
+| **Secrets manager** | ⏳ No API keys in `.env` files (use cloud secrets) |
+
+See [PHASE2.md](PHASE2.md) for setup and curl examples.
 
 ---
 

@@ -1,10 +1,11 @@
 from datetime import datetime
-from typing import Any
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, Request, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
 
-from app.data.loader import get_data_store
+from app.auth import require_ingest_auth
+from app.config import get_settings
+from app.middleware.rate_limit import limiter
 from app.services.live_buffer import get_live_buffer
 from app.services.realtime_engine import get_realtime_engine
 from app.services.realtime_hub import get_realtime_hub
@@ -24,7 +25,8 @@ class ViolationIngest(BaseModel):
 
 
 @router.get("/live/status")
-def live_status():
+@limiter.limit(lambda: get_settings().rate_limit_public)
+def live_status(request: Request):
     return get_realtime_engine().get_status()
 
 
@@ -44,7 +46,12 @@ async def live_websocket(websocket: WebSocket):
 
 
 @router.post("/ingest/violation")
-async def ingest_violation(payload: ViolationIngest):
+@limiter.limit(lambda: get_settings().rate_limit_ingest)
+async def ingest_violation(
+    request: Request,
+    payload: ViolationIngest,
+    _auth=Depends(require_ingest_auth),
+):
     zone = payload.zone or assign_zone(payload.latitude, payload.longitude, BENGALURU_ZONES)
     row = get_live_buffer().ingest(
         {

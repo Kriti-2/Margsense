@@ -40,6 +40,37 @@ class Settings(BaseSettings):
     live_replay_batch_size: int = 2
     live_refresh_seconds: int = 30
 
+    # Phase 2 — auth
+    auth_enabled: bool = False
+    jwt_secret: str = "change-me-in-production"
+    jwt_algorithm: str = "HS256"
+    jwt_expire_minutes: int = 480
+    ingest_api_key: str = ""
+    officer_username: str = "officer"
+    officer_password: str = "parksense-demo"
+    ingest_username: str = "btp-ingest"
+    ingest_password: str = "parksense-ingest"
+
+    # Phase 2 — rate limits (slowapi format)
+    rate_limit_public: str = "120/minute"
+    rate_limit_ingest: str = "60/minute"
+    rate_limit_officer: str = "100/minute"
+    rate_limit_auth: str = "20/minute"
+
+    # Phase 2 — Celery / Redis
+    redis_url: str = "redis://localhost:6379/0"
+    celery_broker_url: str = ""
+    celery_result_backend: str = ""
+    celery_enabled: bool = False
+
+    @property
+    def broker_url(self) -> str:
+        return self.celery_broker_url or self.redis_url
+
+    @property
+    def result_backend(self) -> str:
+        return self.celery_result_backend or self.redis_url
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]

@@ -6,6 +6,8 @@ from typing import Any
 
 import pandas as pd
 
+from app.utilities.time_context import utc_now
+
 logger = logging.getLogger(__name__)
 
 
@@ -75,7 +77,7 @@ class LiveViolationBuffer:
             return df
         if "created_datetime" in df.columns:
             df["created_datetime"] = pd.to_datetime(df["created_datetime"], utc=True, errors="coerce")
-            cutoff = pd.Timestamp.utcnow().tz_localize("UTC") - pd.Timedelta(hours=hours)
+            cutoff = utc_now() - pd.Timedelta(hours=hours)
             df = df[df["created_datetime"] >= cutoff]
         return df
 

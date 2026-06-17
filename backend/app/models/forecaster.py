@@ -161,7 +161,7 @@ class ParkPredictForecaster:
         top_10 = zone_forecasts[:10]
 
         predictions: list[PredictionZone] = []
-        max_pred = max(z["predicted"] for z in top_10) if top_10 else 1
+        max_pred = max(max((z["predicted"] for z in top_10), default=0), 1) if top_10 else 1
 
         for rank, item in enumerate(top_10, start=1):
             meta = BENGALURU_ZONES[item["zone"]]

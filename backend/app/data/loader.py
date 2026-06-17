@@ -53,7 +53,7 @@ class ViolationDataStore:
             return df
 
         logger.warning("CSV not found at %s — using seeded mock data.", csv_path)
-        self._df = self._generate_mock_data()
+        self._df = self._enrich(self._generate_mock_data())
         return self._df
 
     def _clear_derived_caches(self) -> None:
@@ -110,6 +110,20 @@ class ViolationDataStore:
         self._corridors_cache = build_corridors_response(recent if not recent.empty else df, recent_only=False)
         self._caches_warmed = True
         logger.info("API caches warmed successfully")
+
+    def warm_forecast_prophet(self):
+        """Run Prophet model off the request path (Celery / scheduled job)."""
+        from app.models.forecaster import ParkPredictForecaster
+
+        df = self.load()
+        logger.info("Running Prophet forecast for %d violations", len(df))
+        forecaster = ParkPredictForecaster(use_prophet=True)
+        self._forecast_cache = forecaster.forecast(df)
+        if self._shift_planner_cache is not None:
+            from app.services.shift_planner import build_shift_planner_response
+
+            self._shift_planner_cache = build_shift_planner_response(df, self._forecast_cache)
+        return self._forecast_cache
 
     def get_forecast(self):
         if self._forecast_cache is None:
@@ -215,7 +229,14 @@ class ViolationDataStore:
         if "updated_vehicle_type" in df.columns:
             df["vehicle_type"] = df["updated_vehicle_type"].fillna(df["vehicle_type"])
         df["vehicle_type"] = df["vehicle_type"].fillna("CAR")
-        df["violation_types"] = df.get("violation_type", "[]").apply(self._parse_violation_types)
+        if "violation_types" in df.columns:
+            df["violation_types"] = df["violation_types"].apply(
+                lambda v: v if isinstance(v, list) else self._parse_violation_types(v)
+            )
+        elif "violation_type" in df.columns:
+            df["violation_types"] = df["violation_type"].apply(self._parse_violation_types)
+        else:
+            df["violation_types"] = [[] for _ in range(len(df))]
         df["near_intersection"] = df.get("junction_name", "No Junction").apply(
             lambda j: isinstance(j, str) and j.strip().lower() != "no junction"
         )

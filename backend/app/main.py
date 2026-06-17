@@ -3,15 +3,20 @@ import logging
 from contextlib import asynccontextmanager
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from app.config import get_settings
 from app.data.loader import get_data_store
+from app.middleware.rate_limit import limiter
 from app.routes import (
     analytics,
+    auth,
     corridors,
     heatmap,
+    jobs,
     live,
     predictions,
     recidivism,
@@ -26,7 +31,15 @@ scheduler = BackgroundScheduler()
 
 
 def _refresh_data_cache():
-    logger.info("Scheduled data cache refresh")
+    settings = get_settings()
+    if settings.celery_enabled:
+        from app.tasks.heavy_jobs import warm_caches_task
+
+        logger.info("Dispatching warm_caches to Celery")
+        warm_caches_task.delay(use_prophet=False)
+        return
+
+    logger.info("Scheduled data cache refresh (in-process)")
     store = get_data_store()
     store.load(force_reload=True)
     store.warm_caches()
@@ -49,6 +62,11 @@ async def lifespan(app: FastAPI):
     logging.basicConfig(level=logging.DEBUG if settings.debug else logging.INFO)
 
     logger.info("Starting %s — preloading violation dataset", settings.app_name)
+    if settings.celery_enabled:
+        logger.info("Celery enabled — heavy jobs run via worker (%s)", settings.broker_url)
+    if settings.auth_enabled:
+        logger.info("Auth enabled — ingest and officer APIs are protected")
+
     store = get_data_store()
     store.load()
     store.warm_caches()
@@ -83,9 +101,12 @@ def create_app() -> FastAPI:
             "AI-powered parking congestion intelligence platform for Bengaluru. "
             "Detects hotspots, quantifies impact, forecasts violations, and prioritizes enforcement."
         ),
-        version="1.1.0",
+        version="1.2.0",
         lifespan=lifespan,
     )
+
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
     app.add_middleware(
         CORSMiddleware,
@@ -95,6 +116,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    app.include_router(auth.router)
     app.include_router(heatmap.router)
     app.include_router(analytics.router)
     app.include_router(predictions.router)
@@ -103,18 +125,24 @@ def create_app() -> FastAPI:
     app.include_router(corridors.router)
     app.include_router(shift_planner.router)
     app.include_router(live.router)
+    app.include_router(jobs.router)
 
     @app.get("/")
-    def root():
+    @limiter.limit(lambda: get_settings().rate_limit_public)
+    def root(request: Request):
         return {
             "app": settings.app_name,
-            "version": "1.1.0",
+            "version": "1.2.0",
             "live_mode": settings.live_mode,
+            "auth_enabled": settings.auth_enabled,
+            "celery_enabled": settings.celery_enabled,
             "tagline": (
                 "Not just where violations happen — but what they cost, "
                 "where they'll happen next, and exactly how many officers to deploy where."
             ),
             "endpoints": [
+                "/auth/login",
+                "/auth/ingest-token",
                 "/heatmap",
                 "/analytics",
                 "/predictions",
@@ -125,10 +153,13 @@ def create_app() -> FastAPI:
                 "/live/status",
                 "/live/ws",
                 "/ingest/violation",
+                "/jobs/warm-caches",
+                "/jobs/prophet-forecast",
             ],
         }
 
     @app.get("/health")
+    @limiter.exempt
     def health():
         store = get_data_store()
         df = store.load()
@@ -136,6 +167,8 @@ def create_app() -> FastAPI:
         return {
             "status": "healthy",
             "violations_loaded": len(df),
+            "auth_enabled": settings.auth_enabled,
+            "celery_enabled": settings.celery_enabled,
             "live": live,
         }
 

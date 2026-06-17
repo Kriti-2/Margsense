@@ -1,13 +1,14 @@
-from datetime import datetime
+from fastapi import APIRouter, Query, Request
 
-from fastapi import APIRouter, Query
-
+from app.config import get_settings
 from app.data.loader import get_data_store
+from app.middleware.rate_limit import limiter
 
 router = APIRouter(tags=["Heatmap"])
 
 
 @router.get("/heatmap")
-def get_heatmap(limit: int = Query(default=1500, le=5000)):
+@limiter.limit(lambda: get_settings().rate_limit_public)
+def get_heatmap(request: Request, limit: int = Query(default=1500, le=5000)):
     store = get_data_store()
     return store.get_heatmap(limit=limit)
