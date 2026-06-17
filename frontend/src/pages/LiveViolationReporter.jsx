@@ -3,8 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 're
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { api } from '../api/client';
-import { useLiveFeed } from '../hooks/useLiveFeed';
-import LiveStatusBar from '../components/LiveStatusBar';
+
 
 // Fix Leaflet marker icon asset loading in Vite
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -101,15 +100,7 @@ export default function LiveViolationReporter() {
   const [gpsLoading, setGpsLoading] = useState(false);
   const [notification, setNotification] = useState(null);
   const [recentReports, setRecentReports] = useState([]);
-  const [lastTick, setLastTick] = useState(null);
 
-  const handleLiveTick = useCallback((payload) => {
-    if (payload.type === 'live_tick') {
-      setLastTick(payload);
-    }
-  }, []);
-
-  const { connected, status } = useLiveFeed(handleLiveTick);
 
   // Toggle multi-select violation
   function handleViolationChange(type) {
@@ -278,16 +269,7 @@ export default function LiveViolationReporter() {
 
   return (
     <div className="space-y-6">
-      {/* Header and Live Status Bar */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-white">Live Violation Reporter</h2>
-          <p className="mt-1 text-sm text-command-muted">
-            Hackathon control console to inject real-time violation events
-          </p>
-        </div>
-        <LiveStatusBar connected={connected} status={status} lastTick={lastTick} />
-      </div>
+
 
       {/* Toast Alert Banner */}
       {notification && (

@@ -13,6 +13,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import AuthCallback from './pages/AuthCallback';
 import UserCongestion from './pages/UserCongestion';
+import UserLayout from './layouts/UserLayout';
+
 
 export default function App() {
   return (
@@ -24,7 +26,10 @@ export default function App() {
           <Route path="/auth/callback" element={<AuthCallback />} />
 
           <Route element={<ProtectedRoute userOnly />}>
-            <Route path="/congestion" element={<UserCongestion />} />
+            <Route element={<UserLayout />}>
+              <Route path="/congestion" element={<UserCongestion />} />
+              <Route path="/reporter" element={<LiveViolationReporter />} />
+            </Route>
           </Route>
 
           <Route element={<ProtectedRoute officerOnly />}>
@@ -34,7 +39,6 @@ export default function App() {
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/corridors" element={<Corridors />} />
               <Route path="/shift-planner" element={<ShiftPlanner />} />
-              <Route path="/reporter" element={<LiveViolationReporter />} />
               <Route path="/monitor" element={<CameraMonitor />} />
             </Route>
           </Route>
