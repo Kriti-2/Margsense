@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import Predict from './pages/Predict';
 import Analytics from './pages/Analytics';
 import Corridors from './pages/Corridors';
+import LiveViolationReporter from './pages/LiveViolationReporter';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import AuthCallback from './pages/AuthCallback';
@@ -30,6 +31,7 @@ export default function App() {
               <Route path="/predict" element={<Predict />} />
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/corridors" element={<Corridors />} />
+              <Route path="/reporter" element={<LiveViolationReporter />} />
             </Route>
           </Route>
 
