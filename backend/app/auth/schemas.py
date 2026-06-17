@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
+from app.models.user import UserRole
 
 
 class LoginRequest(BaseModel):
@@ -6,13 +7,37 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class UserRegister(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=6, max_length=128)
+    full_name: str = Field(min_length=1, max_length=255)
+
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
-    role: str
-    expires_in_minutes: int
+    role: str | UserRole
+    expires_in_minutes: int | None = None
+    full_name: str | None = None
+    email: str | None = None
 
 
 class TokenPayload(BaseModel):
     sub: str
-    role: str = Field(description="ingest | officer | admin")
+    role: str = Field(description="ingest | officer | admin | user")
+    full_name: str | None = None
+
+
+class UserOut(BaseModel):
+    id: int
+    email: str
+    full_name: str
+    role: UserRole
+
+    class Config:
+        from_attributes = True

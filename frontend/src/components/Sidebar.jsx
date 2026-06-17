@@ -1,6 +1,7 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-const navItems = [
+const officerNav = [
   { to: '/', label: 'Dashboard', icon: '◉' },
   { to: '/predict', label: 'Predict', icon: '◎' },
   { to: '/analytics', label: 'Analytics', icon: '▤' },
@@ -8,6 +9,14 @@ const navItems = [
 ];
 
 export default function Sidebar() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    logout();
+    navigate('/login');
+  }
+
   return (
     <aside className="flex w-64 shrink-0 flex-col border-r border-command-border bg-command-panel">
       <div className="border-b border-command-border px-6 py-5">
@@ -17,13 +26,13 @@ export default function Sidebar() {
           </div>
           <div>
             <h1 className="text-lg font-bold text-white">ParkSense AI</h1>
-            <p className="text-xs text-command-muted">Bengaluru Command Center</p>
+            <p className="text-xs text-command-muted">Officer Command Center</p>
           </div>
         </div>
       </div>
 
       <nav className="flex-1 space-y-1 px-3 py-4">
-        {navItems.map((item) => (
+        {officerNav.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
@@ -44,11 +53,16 @@ export default function Sidebar() {
 
       <div className="border-t border-command-border px-4 py-4">
         <div className="rounded-lg bg-command-bg p-3">
-          <p className="text-xs font-medium text-command-muted">Live Status</p>
-          <div className="mt-2 flex items-center gap-2">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-command-success" />
-            <span className="text-xs text-gray-300">System Operational</span>
-          </div>
+          <p className="text-xs font-medium text-command-muted">Signed in as</p>
+          <p className="mt-1 truncate text-sm font-medium text-white">{user?.full_name}</p>
+          <p className="truncate text-xs text-gray-500">{user?.email}</p>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="mt-3 w-full rounded-md border border-command-border py-1.5 text-xs text-gray-400 hover:text-white"
+          >
+            Log out
+          </button>
         </div>
       </div>
     </aside>

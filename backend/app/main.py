@@ -11,6 +11,7 @@ from slowapi.errors import RateLimitExceeded
 from app.config import get_settings
 from app.data.loader import get_data_store
 from app.middleware.rate_limit import limiter
+from app.database import SessionLocal, init_db
 from app.routes import (
     analytics,
     auth,
@@ -19,6 +20,7 @@ from app.routes import (
     jobs,
     live,
     predictions,
+    public,
     recidivism,
     severity,
     shift_planner,
@@ -66,6 +68,15 @@ async def lifespan(app: FastAPI):
         logger.info("Celery enabled — heavy jobs run via worker (%s)", settings.broker_url)
     if settings.auth_enabled:
         logger.info("Auth enabled — ingest and officer APIs are protected")
+
+    init_db()
+    db = SessionLocal()
+    try:
+        from app.routes.auth import seed_demo_users
+
+        seed_demo_users(db)
+    finally:
+        db.close()
 
     store = get_data_store()
     store.load()
@@ -126,6 +137,7 @@ def create_app() -> FastAPI:
     app.include_router(shift_planner.router)
     app.include_router(live.router)
     app.include_router(jobs.router)
+    app.include_router(public.router)
 
     @app.get("/")
     @limiter.limit(lambda: get_settings().rate_limit_public)
@@ -155,6 +167,9 @@ def create_app() -> FastAPI:
                 "/ingest/violation",
                 "/jobs/warm-caches",
                 "/jobs/prophet-forecast",
+                "/auth/register",
+                "/auth/google/login",
+                "/public/congestion-preview",
             ],
         }
 

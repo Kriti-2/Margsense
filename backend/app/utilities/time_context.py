@@ -4,10 +4,7 @@ import pandas as pd
 
 
 def utc_now() -> pd.Timestamp:
-    ts = pd.Timestamp.utcnow()
-    if ts.tzinfo is None:
-        return ts.tz_localize("UTC")
-    return ts
+    return pd.Timestamp.now(tz="UTC")
 
 
 def get_reference_time(df: pd.DataFrame, use_wall_clock: bool = False) -> pd.Timestamp:
