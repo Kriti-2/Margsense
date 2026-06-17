@@ -205,6 +205,24 @@ class ViolationDataStore:
             zone_intensity=zone_intensity,
         )
 
+        # Re-run forecaster, shift planner, and recidivism caching on combined live data
+        from app.services.live_buffer import get_live_buffer
+        from app.models.forecaster import ParkPredictForecaster
+        from app.services.shift_planner import build_shift_planner_response
+
+        live = get_live_buffer().to_dataframe()
+        if not live.empty:
+            if "violation_types" not in live.columns and "violation_type" in live.columns:
+                live["violation_types"] = live["violation_type"]
+            combined_df = pd.concat([full_df, live], ignore_index=True)
+        else:
+            combined_df = full_df
+
+        forecaster = ParkPredictForecaster(use_prophet=False)
+        self._forecast_cache = forecaster.forecast(combined_df)
+        self._shift_planner_cache = build_shift_planner_response(combined_df, self._forecast_cache)
+        self._recidivism_cache = self._build_recidivism_response(combined_df)
+
     @staticmethod
     def _build_recidivism_response(df: pd.DataFrame) -> dict:
         from datetime import datetime

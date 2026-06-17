@@ -98,7 +98,8 @@ class ParkPredictForecaster:
                     (zone_data["dow"] == current_dow) & (zone_data["hour"] >= current_hour)
                 ]
                 base_rate = len(same_slot) / max(len(zone_data["created_datetime"].dt.date.unique()), 1)
-                predicted = int(max(base_rate * 3, len(zone_data) / 500))
+                daily_rate = len(zone_data) / max(len(working["created_datetime"].dt.date.unique()), 1)
+                predicted = int(max(round(daily_rate * 8), round(base_rate * 24), 10)) + np.random.randint(-2, 3)
                 confidence = min(0.85, 0.5 + len(zone_data) / 10000)
                 peak_hour = int(zone_data.groupby("hour").size().idxmax()) if len(zone_data) > 10 else 18
 
