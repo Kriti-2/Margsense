@@ -114,13 +114,13 @@ export default function Login() {
           </button>
         </form>
 
-        {mode === 'officer' && (
+        {mode === 'user' && (
           <a
             href={getGoogleOAuthUrl()}
             className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-command-border py-2.5 text-sm font-medium text-white hover:bg-white/5"
           >
             <span>Sign in with Google</span>
-            <span className="text-xs text-gray-500">(Officer OAuth)</span>
+            <span className="text-xs text-gray-500">(Citizen OAuth)</span>
           </a>
         )}
 

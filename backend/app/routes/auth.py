@@ -103,12 +103,12 @@ def me(user: User = Depends(get_current_user)):
 
 @router.get("/google/login")
 async def google_login(request: Request):
-    """Officer OAuth — redirects to Google sign-in."""
+    """User OAuth — redirects to Google sign-in."""
     settings = get_settings()
     if not settings.google_client_id:
         raise HTTPException(
             status_code=503,
-            detail="Google OAuth not configured. Use officer demo login or set GOOGLE_CLIENT_ID.",
+            detail="Google OAuth not configured. Use user demo login or set GOOGLE_CLIENT_ID.",
         )
     redirect_uri = settings.google_redirect_uri
     client = AsyncOAuth2Client(
@@ -125,7 +125,7 @@ async def google_login(request: Request):
 
 @router.get("/google/callback")
 async def google_callback(code: str, db: Session = Depends(get_db)):
-    """Google OAuth callback — creates or logs in officer accounts."""
+    """Google OAuth callback — creates or logs in user accounts."""
     settings = get_settings()
     if not settings.google_client_id:
         raise HTTPException(status_code=503, detail="Google OAuth not configured")
@@ -151,8 +151,8 @@ async def google_callback(code: str, db: Session = Depends(get_db)):
     if not user:
         user = User(
             email=email,
-            full_name=profile.get("name", "Officer"),
-            role=UserRole.OFFICER,
+            full_name=profile.get("name", "User"),
+            role=UserRole.USER,
             oauth_provider="google",
             oauth_subject=profile.get("sub"),
         )
@@ -160,8 +160,6 @@ async def google_callback(code: str, db: Session = Depends(get_db)):
     else:
         user.oauth_provider = "google"
         user.oauth_subject = profile.get("sub")
-        if user.role == UserRole.USER:
-            user.role = UserRole.OFFICER
     db.commit()
     db.refresh(user)
 
