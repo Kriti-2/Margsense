@@ -22,6 +22,8 @@
   --command-muted: #6B7C73;
   --command-text: #2F3E46;
   --command-title: #1F2925;
+  --command-panel-glass: rgba(255, 255, 255, 0.65);
+  --command-border-glass: rgba(229, 238, 228, 0.5);
 }
 
 .dark {
@@ -35,6 +37,8 @@
   --command-muted: #A8A29E;
   --command-text: #F5F5F4;
   --command-title: #FFFFFF;
+  --command-panel-glass: rgba(41, 37, 36, 0.52);
+  --command-border-glass: rgba(62, 58, 56, 0.4);
 }
 
 * {
@@ -107,6 +111,15 @@ body {
 .bg-command-panel .text-white:not(.bg-command-accent *):not(.bg-command-danger *):not(.bg-command-success *):not(.bg-command-accent):not(.bg-command-danger):not(.bg-command-success):not(button):not(.text-white-keep),
 .bg-command-bg .text-white:not(.bg-command-accent *):not(.bg-command-danger *):not(.bg-command-success *):not(.bg-command-accent):not(.bg-command-danger):not(.bg-command-success):not(button):not(.text-white-keep) {
   color: var(--command-title) !important;
+}
+
+/* Glassmorphism overrides for command panel background classes */
+.bg-command-panel {
+  background-color: var(--command-panel-glass) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-color: var(--command-border-glass) !important;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 /* Redefine grey text scales to maintain readability - Light Mode */

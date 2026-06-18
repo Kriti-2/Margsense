@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../api/client';
 import { useLiveFeed } from '../hooks/useLiveFeed';
+import { useAudioAlerts } from '../hooks/useAudioAlerts';
 import KPICard from '../components/KPICard';
 import HeatMap from '../components/HeatMap';
 import CongestionDebt from '../components/CongestionDebt';
@@ -11,6 +12,7 @@ import RecidivismMap from '../components/RecidivismMap';
 import TimeLapse from '../components/TimeLapse';
 import LiveStatusBar from '../components/LiveStatusBar';
 import WeatherBanner from '../components/WeatherBanner';
+import AudioAlertControls from '../components/AudioAlertControls';
 
 function formatINR(amount) {
   if (amount >= 100000) return `₹${(amount / 100000).toFixed(1)}L`;
@@ -18,6 +20,9 @@ function formatINR(amount) {
 }
 
 export default function Dashboard() {
+  const audioHook = useAudioAlerts();
+  const lastAlertTypeRef = useRef(null);
+
   const [heatmap, setHeatmap] = useState(null);
   const [analytics, setAnalytics] = useState(null);
   const [predictions, setPredictions] = useState(null);
@@ -56,11 +61,32 @@ export default function Dashboard() {
         ? intensities.reduce((s, z) => s + z.congestion_score, 0) / intensities.length
         : 40;
       setAvgCongestionHistory((prev) => [...prev.slice(-9), Math.round(avgScore)]);
+
+      // 🔊 Audio alerts based on congestion thresholds
+      const maxScore = intensities.length > 0
+        ? Math.max(...intensities.map((z) => z.congestion_score))
+        : 0;
+      if (maxScore >= 80) {
+        lastAlertTypeRef.current = 'critical';
+        audioHook.play('critical');
+      } else if (activeCount >= 3) {
+        lastAlertTypeRef.current = 'warning';
+        audioHook.play('warning');
+      } else {
+        lastAlertTypeRef.current = 'info';
+        audioHook.play('info');
+      }
     }
     if (payload.corridors) {
       setCorridors(payload.corridors);
     }
     if (payload.severity_queue) {
+      // 🔊 Fire critical alert if a CRITICAL violation appears
+      const hasCritical = (payload.severity_queue || []).some((q) => q.severity === 'CRITICAL');
+      if (hasCritical) {
+        lastAlertTypeRef.current = 'critical';
+        audioHook.play('critical');
+      }
       setSeverity((prev) => ({
         ...(prev || {}),
         queue: payload.severity_queue,
@@ -88,7 +114,7 @@ export default function Dashboard() {
         setViolationsLastHourHistory((prev) => [...prev.slice(-9), payload.kpis.violations_last_hour]);
       }
     }
-  }, []);
+  }, [audioHook]);
 
   const { connected, status } = useLiveFeed(handleLiveTick);
 
@@ -152,7 +178,10 @@ export default function Dashboard() {
             Live Bengaluru parking congestion — real violations + traffic intelligence
           </p>
         </div>
-        <LiveStatusBar connected={connected} status={status} lastTick={lastTick} />
+        <div className="flex items-center gap-3">
+          <AudioAlertControls audioHook={audioHook} lastAlertRef={lastAlertTypeRef} />
+          <LiveStatusBar connected={connected} status={status} lastTick={lastTick} />
+        </div>
       </div>
 
       <WeatherBanner
