@@ -41,12 +41,12 @@ export default function UserLayout({ children }) {
           </div>
 
           <div className="flex flex-wrap items-center gap-4">
-            <nav className="flex gap-2 rounded-lg bg-command-bg p-1">
+            <nav className="flex gap-2 rounded-xl bg-command-bg p-1.5 border border-command-border/50">
               <NavLink
                 to="/congestion"
                 className={({ isActive }) =>
-                  `rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
-                    isActive ? 'bg-command-accent text-white font-medium' : 'text-gray-400 hover:text-white'
+                  `rounded-lg px-4 py-1.5 text-xs font-bold transition-all duration-200 ${
+                    isActive ? 'bg-command-accent text-white shadow-sm' : 'text-gray-500 hover:bg-command-border/50 hover:text-command-accent'
                   }`
                 }
               >
@@ -55,8 +55,8 @@ export default function UserLayout({ children }) {
               <NavLink
                 to="/reporter"
                 className={({ isActive }) =>
-                  `rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
-                    isActive ? 'bg-command-accent text-white font-medium' : 'text-gray-400 hover:text-white'
+                  `rounded-lg px-4 py-1.5 text-xs font-bold transition-all duration-200 ${
+                    isActive ? 'bg-command-accent text-white shadow-sm' : 'text-gray-500 hover:bg-command-border/50 hover:text-command-accent'
                   }`
                 }
               >
@@ -65,8 +65,8 @@ export default function UserLayout({ children }) {
               <NavLink
                 to="/corridors"
                 className={({ isActive }) =>
-                  `rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
-                    isActive ? 'bg-command-accent text-white font-medium' : 'text-gray-400 hover:text-white'
+                  `rounded-lg px-4 py-1.5 text-xs font-bold transition-all duration-200 ${
+                    isActive ? 'bg-command-accent text-white shadow-sm' : 'text-gray-500 hover:bg-command-border/50 hover:text-command-accent'
                   }`
                 }
               >
@@ -79,7 +79,7 @@ export default function UserLayout({ children }) {
             <button
               type="button"
               onClick={handleLogout}
-              className="rounded-lg border border-command-border px-3 py-1.5 text-xs text-gray-400 hover:text-white transition-colors cursor-pointer"
+              className="rounded-lg border border-command-border bg-command-panel px-3.5 py-1.5 text-xs font-bold text-gray-600 hover:bg-command-border hover:text-command-accent hover:border-command-accent/20 transition-all duration-200 cursor-pointer"
             >
               Log out
             </button>

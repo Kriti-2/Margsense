@@ -85,12 +85,42 @@ export default function CameraMonitor() {
   const [lastTick, setLastTick] = useState(null);
   const terminalEndRef = useRef(null);
 
+  // Custom Bounding Box Inspector states
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [towedVehicles, setTowedVehicles] = useState(new Set());
+  const vehiclePlatesRef = useRef({});
+
+  const getPlateForVehicle = (camId, vehicleId) => {
+    const key = `${camId}-${vehicleId}`;
+    if (vehiclePlatesRef.current[key]) return vehiclePlatesRef.current[key];
+    const plate = generateLicensePlate();
+    vehiclePlatesRef.current[key] = plate;
+    return plate;
+  };
+
+  const playAlertSound = () => {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+      gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.15);
+    } catch (err) {
+      console.error("Audio Context failed to play sound", err);
+    }
+  };
+
   // References to the HTML5 video tags
   const videoRefs = useRef({});
   const sharedCanvasRef = useRef(null);
 
   // Real-time TensorFlow.js Model states
-  const [tfStatus, setTfStatus] = useState('initializing'); // initializing, loading_model, active, fallback
+  const [tfStatus, setTfStatus] = useState('fallback'); // default to lightweight lane emulation
   const [model, setModel] = useState(null);
   const [realDetections, setRealDetections] = useState({});
 
@@ -128,6 +158,7 @@ export default function CameraMonitor() {
 
   // 1. Dynamic script verification & COCO-SSD loading
   useEffect(() => {
+    if (tfStatus !== 'initializing') return;
     async function initTF() {
       try {
         addLog("Initializing neural network environment...", "info");
@@ -250,6 +281,7 @@ export default function CameraMonitor() {
 
               // Track IDs across frames for smooth transitions
               const prevDets = prevDetectionsRef.current[cam.id] || [];
+              const usedIds = new Set();
               const trackedDetections = cleanDetections.map((p) => {
                 const x = (p.bbox[0] / vW) * 100;
                 const y = (p.bbox[1] / vH) * 100;
@@ -261,7 +293,7 @@ export default function CameraMonitor() {
                 let minDistance = 15; // Max distance in % to match same vehicle
                 
                 prevDets.forEach((prev) => {
-                  if (prev.class === pClass) {
+                  if (prev.class === pClass && !usedIds.has(prev.id)) {
                     const dist = Math.hypot(prev.x - x, prev.y - y);
                     if (dist < minDistance) {
                       minDistance = dist;
@@ -270,6 +302,9 @@ export default function CameraMonitor() {
                   }
                 });
 
+                if (matchedId) {
+                  usedIds.add(matchedId);
+                }
                 const finalId = matchedId || Math.random().toString(36).substring(2, 9);
                 return {
                   id: finalId,
@@ -511,13 +546,26 @@ export default function CameraMonitor() {
       // Calculate box percentage positions
       const coords = isTfActive ? obj : getFallbackVehicleProps(camId, obj);
       const isTargetViolating = obj.id === violationTargetId;
+      const isTowed = towedVehicles.has(obj.id);
 
       if (isTargetViolating) {
         // Render violating object in red with stationary countdown tracking
         boxes.push(
           <div
             key={obj.id}
-            className="absolute border-2 border-command-danger bg-command-danger/10 p-1 rounded animate-pulse text-left transition-all duration-300"
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedVehicle({
+                id: obj.id,
+                camId,
+                plate: isViolating.plate,
+                class: (isTfActive ? obj.class : obj.type).toUpperCase(),
+                score: isTfActive ? obj.score : obj.confidence,
+                status: isTowed ? 'TOWED' : 'VIOLATING',
+                violationType: isViolating.violation
+              });
+            }}
+            className="absolute border-2 border-command-danger bg-command-danger/10 p-1 rounded animate-pulse text-left transition-all duration-300 cursor-crosshair hover:shadow-[0_0_15px_#C27A7A] hover:bg-command-danger/20"
             style={{
               top: `${coords.y}%`,
               left: `${coords.x}%`,
@@ -544,14 +592,29 @@ export default function CameraMonitor() {
         const score = isTfActive ? obj.score : obj.confidence;
         
         const isSuccessColor = label === 'CAR' || label === 'TRUCK' || label === 'BUS';
-        const colorClass = isSuccessColor 
-          ? 'border-command-success text-command-success bg-command-success/5' 
-          : 'border-command-accent text-command-accent bg-command-accent/5';
+        const colorClass = isTowed
+          ? 'border-command-success text-command-success bg-command-success/20 ring-2 ring-command-success animate-pulse'
+          : isSuccessColor 
+          ? 'border-command-success text-command-success bg-command-success/5 hover:border-command-accent hover:shadow-[0_0_12px_rgba(72,110,93,0.5)]' 
+          : 'border-command-accent text-command-accent bg-command-accent/5 hover:border-command-accent hover:shadow-[0_0_12px_rgba(72,110,93,0.5)]';
 
         boxes.push(
           <div
             key={obj.id}
-            className={`absolute border p-0.5 rounded text-[8px] font-mono transition-all duration-300 ${colorClass}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              const plate = getPlateForVehicle(camId, obj.id);
+              setSelectedVehicle({
+                id: obj.id,
+                camId,
+                plate,
+                class: label.toUpperCase(),
+                score,
+                status: isTowed ? 'TOWED' : 'ACTIVE',
+                violationType: null
+              });
+            }}
+            className={`absolute border p-0.5 rounded text-[8px] font-mono transition-all duration-300 cursor-crosshair ${colorClass}`}
             style={{
               top: `${coords.y}%`,
               left: `${coords.x}%`,
@@ -559,7 +622,7 @@ export default function CameraMonitor() {
               height: `${coords.height}%`,
             }}
           >
-            {label} [{score}%]
+            {isTowed ? 'TOWED' : `${label} [${score}%]`}
           </div>
         );
       }
@@ -698,19 +761,42 @@ export default function CameraMonitor() {
             </div>
           </div>
 
-          {/* Toggle Auto Ingestion */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-400 font-medium">Auto-Trigger Demo Violations:</span>
-            <button
-              onClick={() => setAutoIngest(!autoIngest)}
-              className={`rounded-full px-3 py-1 text-xs font-bold transition-colors ${
-                autoIngest
-                  ? 'bg-command-success text-white'
-                  : 'bg-gray-600 text-gray-300'
-              }`}
-            >
-              {autoIngest ? 'ENABLED (35s)' : 'DISABLED'}
-            </button>
+          <div className="flex items-center gap-4">
+            {/* Toggle YOLO Mode */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-400 font-medium">YOLO Detection:</span>
+              <button
+                onClick={() => {
+                  if (tfStatus === 'fallback') {
+                    setTfStatus('initializing');
+                  } else {
+                    setTfStatus('fallback');
+                  }
+                }}
+                className={`rounded-full px-3 py-1 text-xs font-bold transition-colors cursor-pointer ${
+                  tfStatus === 'active' || tfStatus === 'initializing' || tfStatus === 'loading_model'
+                    ? 'bg-command-accent text-white'
+                    : 'bg-gray-600 text-gray-300'
+                }`}
+              >
+                {tfStatus === 'active' ? 'ACTIVE (GPU)' : tfStatus === 'fallback' ? 'OFF (EMULATOR)' : 'BOOTING...'}
+              </button>
+            </div>
+
+            {/* Toggle Auto Ingestion */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-400 font-medium">Auto-Trigger:</span>
+              <button
+                onClick={() => setAutoIngest(!autoIngest)}
+                className={`rounded-full px-3 py-1 text-xs font-bold transition-colors cursor-pointer ${
+                  autoIngest
+                    ? 'bg-command-success text-white'
+                    : 'bg-gray-600 text-gray-300'
+                }`}
+              >
+                {autoIngest ? 'ENABLED' : 'DISABLED'}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -732,6 +818,86 @@ export default function CameraMonitor() {
           <div ref={terminalEndRef} />
         </div>
       </div>
+
+      {/* Floating Vehicle Inspector Modal */}
+      {selectedVehicle && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-sm rounded-2xl border border-command-border bg-command-panel p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-command-border pb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🔍</span>
+                <h3 className="text-lg font-bold text-white">Vehicle Inspector</h3>
+              </div>
+              <button 
+                onClick={() => setSelectedVehicle(null)} 
+                className="text-gray-400 hover:text-white text-xl font-bold cursor-pointer"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex justify-between text-xs">
+                <span className="text-command-muted">Camera Feed:</span>
+                <span className="font-semibold text-gray-800">{selectedVehicle.camId} ({CAMERAS.find(c => c.id === selectedVehicle.camId)?.zone})</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-command-muted">Detection Class:</span>
+                <span className="font-semibold text-gray-800 uppercase">{selectedVehicle.class} ({selectedVehicle.score}% conf.)</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-command-muted">Current Status:</span>
+                <span className={`font-semibold ${selectedVehicle.status === 'VIOLATING' ? 'text-command-danger' : selectedVehicle.status === 'TOWED' ? 'text-command-success' : 'text-command-accent'}`}>
+                  {selectedVehicle.status}
+                </span>
+              </div>
+              {selectedVehicle.violationType && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-command-muted">Offense:</span>
+                  <span className="font-semibold text-command-danger uppercase">{selectedVehicle.violationType}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Indian License Plate Mockup */}
+            <div className="flex items-center border border-gray-300 bg-yellow-50/90 rounded-lg px-4 py-2 font-mono font-bold text-gray-800 tracking-wider shadow-inner w-fit mx-auto my-4 relative overflow-hidden">
+              <div className="border-r border-gray-300 pr-3 mr-3 text-[10px] text-blue-800 flex flex-col items-center leading-none">
+                <span className="font-sans font-extrabold text-blue-800">IND</span>
+                <span className="text-[8px] mt-0.5">⚡</span>
+              </div>
+              <span className="text-xl tracking-widest">{selectedVehicle.plate}</span>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setSelectedVehicle(null)}
+                className="flex-1 rounded-xl border border-command-border bg-command-bg px-4 py-2.5 text-xs font-semibold text-gray-600 hover:bg-command-bg/85 active:scale-95 transition-all cursor-pointer"
+              >
+                Close
+              </button>
+              
+              <button
+                onClick={() => {
+                  playAlertSound();
+                  setTowedVehicles(prev => {
+                    const next = new Set(prev);
+                    next.add(selectedVehicle.id);
+                    return next;
+                  });
+                  setSelectedVehicle(prev => ({ ...prev, status: 'TOWED' }));
+                  addLog(`[${selectedVehicle.camId}] 🚨 TOWING DISPATCHED: Deploying towing unit for vehicle ${selectedVehicle.plate} (${selectedVehicle.class})`, 'danger');
+                  showToast('success', `Towing dispatched for ${selectedVehicle.plate}!`);
+                }}
+                disabled={selectedVehicle.status === 'TOWED'}
+                className="flex-1 rounded-xl bg-command-danger text-white px-4 py-2.5 text-xs font-semibold hover:opacity-95 active:scale-95 disabled:opacity-50 disabled:scale-100 transition-all shadow-md shadow-command-danger/20 cursor-pointer"
+              >
+                {selectedVehicle.status === 'TOWED' ? 'Towed ✅' : 'Dispatch Towing 🚨'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

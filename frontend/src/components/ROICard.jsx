@@ -88,7 +88,7 @@ export default function ROICard({ shiftData, analytics }) {
   return (
     <div
       id="roi-card"
-      className="relative overflow-hidden rounded-xl border border-emerald-500/30 bg-command-panel p-6"
+      className="relative overflow-hidden rounded-xl border border-emerald-500/30 bg-command-panel p-6 interactive-card shadow-sm"
     >
       {/* Subtle gradient glow */}
       <div

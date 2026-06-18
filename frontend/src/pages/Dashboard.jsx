@@ -28,6 +28,7 @@ export default function Dashboard() {
   const [lastTick, setLastTick] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('overview');
 
   const handleLiveTick = useCallback((payload) => {
     if (payload.type !== 'live_tick') return;
@@ -136,49 +137,91 @@ export default function Dashboard() {
         liveWeather={lastTick?.weather}
       />
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <KPICard
-          title="Total Violations"
-          value={kpis.total_violations?.toLocaleString('en-IN') || '—'}
-          subtitle="Bengaluru police dataset"
-          variant="accent"
-        />
-        <KPICard
-          title="Active Hotspots"
-          value={kpis.active_hotspots || 0}
-          subtitle="Live congestion ≥ 50"
-          variant="warning"
-        />
-        <KPICard
-          title="Violations (1h)"
-          value={lastTick?.kpis?.violations_last_hour ?? '—'}
-          subtitle="Rolling live window"
-          variant="danger"
-        />
-        <KPICard
-          title="Avg Congestion Score"
-          value={kpis.avg_congestion_score || 0}
-          subtitle="Traffic + violation signal"
-          variant="default"
-        />
+      {/* Tabs Selector */}
+      <div className="flex bg-command-panel border border-command-border p-1 rounded-xl w-fit gap-1 shadow-sm">
+        <button
+          onClick={() => setActiveTab('overview')}
+          className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+            activeTab === 'overview'
+              ? 'bg-command-accent text-white shadow-sm'
+              : 'text-command-muted hover:text-white'
+          }`}
+        >
+          📊 Live Overview
+        </button>
+        <button
+          onClick={() => setActiveTab('economic')}
+          className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+            activeTab === 'economic'
+              ? 'bg-command-accent text-white shadow-sm'
+              : 'text-command-muted hover:text-white'
+          }`}
+        >
+          💸 Economic Impact
+        </button>
+        <button
+          onClick={() => setActiveTab('operations')}
+          className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+            activeTab === 'operations'
+              ? 'bg-command-accent text-white shadow-sm'
+              : 'text-command-muted hover:text-white'
+          }`}
+        >
+          🚨 Patrol Operations
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <CongestionDebt analytics={analytics} />
-        <ROICard shiftData={shiftData} analytics={analytics} />
-      </div>
+      {activeTab === 'overview' && (
+        <div className="space-y-6 animate-fadeIn">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <KPICard
+              title="Total Violations"
+              value={kpis.total_violations?.toLocaleString('en-IN') || '—'}
+              subtitle="Bengaluru police dataset"
+              variant="accent"
+            />
+            <KPICard
+              title="Active Hotspots"
+              value={kpis.active_hotspots || 0}
+              subtitle="Live congestion ≥ 50"
+              variant="warning"
+            />
+            <KPICard
+              title="Violations (1h)"
+              value={lastTick?.kpis?.violations_last_hour ?? '—'}
+              subtitle="Rolling live window"
+              variant="danger"
+            />
+            <KPICard
+              title="Avg Congestion Score"
+              value={kpis.avg_congestion_score || 0}
+              subtitle="Traffic + violation signal"
+              variant="default"
+            />
+          </div>
+          <div className="grid grid-cols-1 gap-6">
+            <HeatMap data={heatmap} zoneIntensity={heatmap?.zone_intensity} height="420px" />
+          </div>
+        </div>
+      )}
 
-      <div className="grid grid-cols-1 gap-6">
-        <HeatMap data={heatmap} zoneIntensity={heatmap?.zone_intensity} height="420px" />
-      </div>
+      {activeTab === 'economic' && (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 animate-fadeIn">
+          <CongestionDebt analytics={analytics} />
+          <ROICard shiftData={shiftData} analytics={analytics} />
+        </div>
+      )}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-        <EnforcementBrief shiftData={shiftData} predictions={predictions} corridors={corridors} />
-        <SeverityQueue data={severity} />
-        <TimeLapse trends={analytics?.violation_trends} />
-      </div>
-
-      <RecidivismMap data={recidivism} />
+      {activeTab === 'operations' && (
+        <div className="space-y-6 animate-fadeIn">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
+            <EnforcementBrief shiftData={shiftData} predictions={predictions} corridors={corridors} />
+            <SeverityQueue data={severity} />
+            <TimeLapse trends={analytics?.violation_trends} />
+          </div>
+          <RecidivismMap data={recidivism} />
+        </div>
+      )}
     </div>
   );
 }

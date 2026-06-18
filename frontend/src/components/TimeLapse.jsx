@@ -16,7 +16,7 @@ export default function TimeLapse({ trends = [] }) {
   const visibleData = data.slice(0, frame + 1);
 
   return (
-    <div className="rounded-xl border border-command-border bg-command-panel p-6">
+    <div className="rounded-xl border border-command-border bg-command-panel p-6 interactive-card shadow-sm">
       <h3 className="text-lg font-semibold text-white">Violation Time-Lapse</h3>
       <p className="mt-1 text-sm text-command-muted">14-day violation trend animation</p>
       <div className="mt-4 h-48">
@@ -24,17 +24,17 @@ export default function TimeLapse({ trends = [] }) {
           <AreaChart data={visibleData}>
             <defs>
               <linearGradient id="violationGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4} />
-                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                <stop offset="5%" stopColor="#486E5D" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#486E5D" stopOpacity={0} />
               </linearGradient>
             </defs>
             <XAxis dataKey="date" tick={{ fill: '#6b7280', fontSize: 10 }} tickFormatter={(d) => d.slice(5)} />
             <YAxis tick={{ fill: '#6b7280', fontSize: 10 }} />
             <Tooltip
-              contentStyle={{ background: '#111827', border: '1px solid #374151', borderRadius: 8 }}
-              labelStyle={{ color: '#9ca3af' }}
+              contentStyle={{ background: '#FFFFFF', border: '1px solid #E5EEE4', borderRadius: 12, boxShadow: '0 8px 16px -4px rgba(80,114,100,0.1)' }}
+              labelStyle={{ color: '#1F2925', fontWeight: 'bold' }}
             />
-            <Area type="monotone" dataKey="violations" stroke="#3b82f6" fill="url(#violationGradient)" />
+            <Area type="monotone" dataKey="violations" stroke="#486E5D" strokeWidth={2.5} fill="url(#violationGradient)" />
           </AreaChart>
         </ResponsiveContainer>
       </div>

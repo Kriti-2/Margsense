@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 @theme {
-  --color-command-bg: #0a0e17;
-  --color-command-panel: #111827;
-  --color-command-border: #1f2937;
-  --color-command-accent: #3b82f6;
-  --color-command-warning: #f59e0b;
-  --color-command-danger: #ef4444;
-  --color-command-success: #10b981;
-  --color-command-muted: #6b7280;
+  --color-command-bg: #F6F4E8;
+  --color-command-panel: #FFFFFF;
+  --color-command-border: #E5EEE4;
+  --color-command-accent: #486E5D;
+  --color-command-warning: #D29C42;
+  --color-command-danger: #C27A7A;
+  --color-command-success: #486E5D;
+  --color-command-muted: #6B7C73;
 }
 
 * {
@@ -19,15 +19,16 @@ body {
   margin: 0;
   font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
   background: var(--color-command-bg);
-  color: #e5e7eb;
+  color: #2F3E46;
   min-height: 100vh;
 }
 
 .leaflet-container {
   width: 100%;
   height: 100%;
-  background: #0f172a;
+  background: #E5EEE4;
   border-radius: 0.75rem;
+  border: 1px solid rgba(80, 114, 100, 0.15);
 }
 
 ::-webkit-scrollbar {
@@ -36,10 +37,86 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #111827;
+  background: #F6F4E8;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #374151;
+  background: #C0E1D2;
   border-radius: 3px;
 }
+
+/* Micro-animations and hover transitions for premium interactivity */
+.interactive-card {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease;
+}
+
+.interactive-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -10px rgba(80, 114, 100, 0.15), 0 0 1px 1px rgba(80, 114, 100, 0.08);
+  border-color: rgba(80, 114, 100, 0.25) !important;
+}
+
+.interactive-btn {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.interactive-btn:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.interactive-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Smart overrides to keep existing markup readable on light backgrounds */
+.bg-command-panel h1, .bg-command-panel h2, .bg-command-panel h3, .bg-command-panel h4,
+.bg-command-bg h1, .bg-command-bg h2, .bg-command-bg h3, .bg-command-bg h4 {
+  color: #1F2925 !important;
+}
+
+/* Override text-white inside panels/bg to be dark slate, unless it is inside a colored pill/button */
+.bg-command-panel .text-white:not(.bg-command-accent *):not(.bg-command-danger *):not(.bg-command-success *):not(.bg-command-accent):not(.bg-command-danger):not(.bg-command-success):not(button):not(.text-white-keep),
+.bg-command-bg .text-white:not(.bg-command-accent *):not(.bg-command-danger *):not(.bg-command-success *):not(.bg-command-accent):not(.bg-command-danger):not(.bg-command-success):not(button):not(.text-white-keep) {
+  color: #1F2925 !important;
+}
+
+/* Redefine grey text scales to be dark green/slate to maintain readability */
+.bg-command-panel .text-gray-400, .bg-command-bg .text-gray-400 {
+  color: #6B7C73 !important;
+}
+.bg-command-panel .text-gray-300, .bg-command-bg .text-gray-300 {
+  color: #4A5851 !important;
+}
+.bg-command-panel .text-gray-200, .bg-command-bg .text-gray-200 {
+  color: #354F52 !important;
+}
+.bg-command-panel .text-gray-500, .bg-command-bg .text-gray-500 {
+  color: #8A9B92 !important;
+}
+
+/* For Recharts labels/tooltips inside panels */
+.recharts-text {
+  fill: #4A5851 !important;
+}
+.recharts-legend-item-text {
+  color: #4A5851 !important;
+}
+.recharts-tooltip-label {
+  color: #1F2925 !important;
+}
+
+/* Custom Cursor styling for fine pointers */
+@media (pointer: fine) {
+  body, 
+  a, 
+  button, 
+  select, 
+  input, 
+  textarea,
+  .cursor-pointer,
+  [role="button"] {
+    cursor: none !important;
+  }
+}
+

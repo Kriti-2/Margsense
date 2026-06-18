@@ -22,10 +22,10 @@ function FitBounds({ features }) {
 }
 
 function intensityColor(score) {
-  if (score >= 75) return '#ef4444';
-  if (score >= 50) return '#f59e0b';
-  if (score >= 25) return '#eab308';
-  return '#3b82f6';
+  if (score >= 75) return '#C27A7A'; // Danger rose
+  if (score >= 50) return '#E6CCA0'; // Peach warning
+  if (score >= 25) return '#C0E1D2'; // Warm sage light
+  return '#9FC9BA'; // Safe sage
 }
 
 export default function HeatMap({ data, zoneIntensity = {}, height = '400px' }) {

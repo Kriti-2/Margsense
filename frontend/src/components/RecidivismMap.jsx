@@ -7,7 +7,7 @@ export default function RecidivismMap({ data }) {
   const zones = data?.zones || [];
 
   return (
-    <div className="rounded-xl border border-command-border bg-command-panel p-6">
+    <div className="rounded-xl border border-command-border bg-command-panel p-6 interactive-card shadow-sm">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-white">Recidivism Heatmap</h3>
@@ -45,8 +45,8 @@ export default function RecidivismMap({ data }) {
               center={[zone.latitude, zone.longitude]}
               radius={12 + zone.recurrence_rate * 30}
               pathOptions={{
-                color: zone.is_stubborn_zone ? '#ef4444' : '#f59e0b',
-                fillColor: zone.is_stubborn_zone ? '#ef4444' : '#f59e0b',
+                color: zone.is_stubborn_zone ? '#C27A7A' : '#D29C42',
+                fillColor: zone.is_stubborn_zone ? '#C27A7A' : '#D29C42',
                 fillOpacity: 0.4,
                 weight: 2,
               }}

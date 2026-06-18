@@ -9,7 +9,7 @@ export default function SeverityQueue({ data }) {
   const summary = data?.summary || {};
 
   return (
-    <div className="rounded-xl border border-command-border bg-command-panel p-6">
+    <div className="rounded-xl border border-command-border bg-command-panel p-6 interactive-card shadow-sm">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-white">Severity Queue</h3>
         <div className="flex gap-2 text-xs">

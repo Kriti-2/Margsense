@@ -22,6 +22,7 @@ export default function Corridors() {
   const [loading, setLoading] = useState(true);
   const [lastTick, setLastTick] = useState(null);
   const [routesData, setRoutesData] = useState({});
+  const [activeTab, setActiveTab] = useState('protect');
 
   const handleLiveTick = useCallback((payload) => {
     if (payload.type !== 'live_tick') return;
@@ -93,105 +94,140 @@ export default function Corridors() {
         <LiveStatusBar connected={connected} status={status} lastTick={lastTick} />
       </div>
 
-      <div className="h-96 overflow-hidden rounded-xl border border-command-border">
-        <MapContainer center={BENGALURU_CENTER} zoom={12} style={{ height: '100%' }}>
-        <LayersControl position="topright">
-          <LayersControl.BaseLayer checked name="Google Streets">
-            <TileLayer
-              attribution="&copy; Google Maps"
-              url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
-            />
-          </LayersControl.BaseLayer>
-          <LayersControl.BaseLayer name="Google Satellite">
-            <TileLayer
-              attribution="&copy; Google Maps"
-              url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
-            />
-          </LayersControl.BaseLayer>
-          <LayersControl.BaseLayer name="Dark Mode">
-            <TileLayer
-              attribution="&copy; CartoDB"
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-            />
-          </LayersControl.BaseLayer>
-        </LayersControl>
-          {corridorList.map((corridor) => {
-            const route = routesData[corridor.id];
-            const primaryCoords = route?.primary || corridor.waypoints || [];
-            const alternativeCoords = route?.alternative;
+      {/* Tabs Selector */}
+      <div className="flex bg-command-panel border border-command-border p-1 rounded-xl w-fit gap-1 shadow-sm">
+        <button
+          onClick={() => setActiveTab('protect')}
+          className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+            activeTab === 'protect'
+              ? 'bg-command-accent text-white shadow-sm'
+              : 'text-command-muted hover:text-white'
+          }`}
+        >
+          🏥 Emergency Corridors
+        </button>
+        <button
+          onClick={() => setActiveTab('recidivism')}
+          className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+            activeTab === 'recidivism'
+              ? 'bg-command-accent text-white shadow-sm'
+              : 'text-command-muted hover:text-white'
+          }`}
+        >
+          🔁 Recidivism Heatmap
+        </button>
+      </div>
 
-            return (
-              <div key={corridor.id}>
-                {/* Primary Route */}
-                <Polyline
-                  positions={primaryCoords}
-                  pathOptions={{
-                    color: corridorColors[corridor.status] || '#3b82f6',
-                    weight: corridor.status === 'BLOCKED' ? 6 : 5,
-                    opacity: 0.85,
-                    dashArray: corridor.status === 'BLOCKED' ? '5, 8' : undefined,
-                  }}
-                >
-                  <Popup>
-                    <div className="text-sm font-semibold text-white">
-                      {corridor.name}
-                    </div>
-                    <div className="text-xs mt-1 text-gray-300">
-                      Status: <span className="font-bold" style={{ color: corridorColors[corridor.status] }}>{corridor.status}</span>
-                    </div>
-                    {corridor.status === 'BLOCKED' && (
-                      <div className="text-xs mt-1 text-command-success font-semibold">
-                        ⚠️ Alternative route calculated and suggested (green).
-                      </div>
+      {activeTab === 'protect' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fadeIn">
+          {/* Map Column */}
+          <div className="lg:col-span-2 h-96 overflow-hidden rounded-xl border border-command-border text-left relative">
+            <MapContainer center={BENGALURU_CENTER} zoom={12} style={{ height: '100%' }}>
+              <LayersControl position="topright">
+                <LayersControl.BaseLayer checked name="Google Streets">
+                  <TileLayer
+                    attribution="&copy; Google Maps"
+                    url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+                  />
+                </LayersControl.BaseLayer>
+                <LayersControl.BaseLayer name="Google Satellite">
+                  <TileLayer
+                    attribution="&copy; Google Maps"
+                    url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
+                  />
+                </LayersControl.BaseLayer>
+                <LayersControl.BaseLayer name="Dark Mode">
+                  <TileLayer
+                    attribution="&copy; CartoDB"
+                    url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                  />
+                </LayersControl.BaseLayer>
+              </LayersControl>
+              {corridorList.map((corridor) => {
+                const route = routesData[corridor.id];
+                const primaryCoords = route?.primary || corridor.waypoints || [];
+                const alternativeCoords = route?.alternative;
+
+                return (
+                  <div key={corridor.id}>
+                    {/* Primary Route */}
+                    <Polyline
+                      positions={primaryCoords}
+                      pathOptions={{
+                        color: corridorColors[corridor.status] || '#3b82f6',
+                        weight: corridor.status === 'BLOCKED' ? 6 : 5,
+                        opacity: 0.85,
+                        dashArray: corridor.status === 'BLOCKED' ? '5, 8' : undefined,
+                      }}
+                    >
+                      <Popup>
+                        <div className="text-sm font-semibold text-white">
+                          {corridor.name}
+                        </div>
+                        <div className="text-xs mt-1 text-gray-300">
+                          Status: <span className="font-bold" style={{ color: corridorColors[corridor.status] }}>{corridor.status}</span>
+                        </div>
+                        {corridor.status === 'BLOCKED' && (
+                          <div className="text-xs mt-1 text-command-success font-semibold">
+                            ⚠️ Alternative route calculated and suggested (green).
+                          </div>
+                        )}
+                      </Popup>
+                    </Polyline>
+
+                    {/* Alternative Route */}
+                    {corridor.status === 'BLOCKED' && alternativeCoords && (
+                      <Polyline
+                        positions={alternativeCoords}
+                        pathOptions={{
+                          color: '#10b981',
+                          weight: 5,
+                          opacity: 0.9,
+                          dashArray: '10, 8',
+                        }}
+                      >
+                        <Popup>
+                          <div className="text-sm font-semibold text-white">
+                            Suggested Alternative Corridor Route
+                          </div>
+                          <div className="text-xs mt-1 text-command-success font-semibold">
+                            Bypasses blocked bottlenecks on {corridor.name}
+                          </div>
+                        </Popup>
+                      </Polyline>
                     )}
-                  </Popup>
-                </Polyline>
-
-                {/* Alternative Route (if primary is blocked) */}
-                {corridor.status === 'BLOCKED' && alternativeCoords && (
-                  <Polyline
-                    positions={alternativeCoords}
+                  </div>
+                );
+              })}
+              {corridorList.map((corridor) =>
+                corridor.waypoints?.map((wp, i) => (
+                  <CircleMarker
+                    key={`${corridor.id}-${i}`}
+                    center={wp}
+                    radius={6}
                     pathOptions={{
-                      color: '#10b981',
-                      weight: 5,
-                      opacity: 0.9,
-                      dashArray: '10, 8',
+                      color: corridorColors[corridor.status],
+                      fillColor: corridorColors[corridor.status],
+                      fillOpacity: 0.8,
                     }}
-                  >
-                    <Popup>
-                      <div className="text-sm font-semibold text-white">
-                        Suggested Alternative Corridor Route
-                      </div>
-                      <div className="text-xs mt-1 text-command-success font-semibold">
-                        Bypasses blocked bottlenecks on {corridor.name}
-                      </div>
-                    </Popup>
-                  </Polyline>
-                )}
-              </div>
-            );
-          })}
-          {corridorList.map((corridor) =>
-            corridor.waypoints?.map((wp, i) => (
-              <CircleMarker
-                key={`${corridor.id}-${i}`}
-                center={wp}
-                radius={6}
-                pathOptions={{
-                  color: corridorColors[corridor.status],
-                  fillColor: corridorColors[corridor.status],
-                  fillOpacity: 0.8,
-                }}
-              />
-            ))
-          )}
-        </MapContainer>
-      </div>
+                  />
+                ))
+              )}
+            </MapContainer>
+          </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <CorridorStatus data={corridors} />
-        <RecidivismMap data={recidivism} />
-      </div>
+          {/* Status Column */}
+          <div className="lg:col-span-1">
+            <CorridorStatus data={corridors} />
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'recidivism' && (
+        <div className="animate-fadeIn">
+          <RecidivismMap data={recidivism} />
+        </div>
+      )}
     </div>
   );
 }

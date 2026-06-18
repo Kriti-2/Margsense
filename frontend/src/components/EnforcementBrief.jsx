@@ -10,7 +10,7 @@ export default function EnforcementBrief({ shiftData, predictions, corridors }) 
   const blockedCorridors = corridors?.corridors?.filter((c) => c.status === 'BLOCKED') || [];
 
   return (
-    <div className="rounded-xl border border-command-border bg-command-panel p-6">
+    <div className="rounded-xl border border-command-border bg-command-panel p-6 interactive-card shadow-sm">
       <h3 className="text-lg font-semibold text-white">Enforcement Brief</h3>
       <p className="mt-1 text-sm text-command-muted">Priority actions for next 24 hours</p>
 

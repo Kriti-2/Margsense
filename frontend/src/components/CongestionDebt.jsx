@@ -24,7 +24,7 @@ export default function CongestionDebt({ analytics }) {
   }, [dailyLoss]);
 
   return (
-    <div className="rounded-xl border border-command-danger/30 bg-gradient-to-br from-command-danger/10 to-command-panel p-6">
+    <div className="rounded-xl border border-command-danger/30 bg-gradient-to-br from-command-danger/5 to-command-panel p-6 interactive-card shadow-sm">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs font-medium uppercase tracking-wider text-command-muted">
