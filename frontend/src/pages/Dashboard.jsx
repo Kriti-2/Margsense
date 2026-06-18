@@ -21,6 +21,9 @@ function formatINR(amount) {
 
 export default function Dashboard() {
   const audioHook = useAudioAlerts();
+  // Stable ref to play() — lets handleLiveTick keep [] deps without stale closures
+  const playRef = useRef(audioHook.play);
+  useEffect(() => { playRef.current = audioHook.play; }, [audioHook.play]);
   const lastAlertTypeRef = useRef(null);
 
   const [heatmap, setHeatmap] = useState(null);
@@ -68,13 +71,13 @@ export default function Dashboard() {
         : 0;
       if (maxScore >= 80) {
         lastAlertTypeRef.current = 'critical';
-        audioHook.play('critical');
+        playRef.current('critical');
       } else if (activeCount >= 3) {
         lastAlertTypeRef.current = 'warning';
-        audioHook.play('warning');
+        playRef.current('warning');
       } else {
         lastAlertTypeRef.current = 'info';
-        audioHook.play('info');
+        playRef.current('info');
       }
     }
     if (payload.corridors) {
@@ -85,7 +88,7 @@ export default function Dashboard() {
       const hasCritical = (payload.severity_queue || []).some((q) => q.severity === 'CRITICAL');
       if (hasCritical) {
         lastAlertTypeRef.current = 'critical';
-        audioHook.play('critical');
+        playRef.current('critical');
       }
       setSeverity((prev) => ({
         ...(prev || {}),
@@ -114,7 +117,7 @@ export default function Dashboard() {
         setViolationsLastHourHistory((prev) => [...prev.slice(-9), payload.kpis.violations_last_hour]);
       }
     }
-  }, [audioHook]);
+  }, []);
 
   const { connected, status } = useLiveFeed(handleLiveTick);
 
