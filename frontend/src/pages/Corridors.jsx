@@ -95,7 +95,7 @@ export default function Corridors() {
       </div>
 
       {/* Tabs Selector */}
-      <div className="flex bg-command-panel border border-command-border p-1 rounded-xl w-fit gap-1 shadow-sm">
+      <div className="flex overflow-x-auto select-none no-scrollbar flex-nowrap bg-command-panel border border-command-border p-1 rounded-xl w-full sm:w-fit gap-1 shadow-sm">
         <button
           onClick={() => setActiveTab('protect')}
           className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${

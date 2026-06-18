@@ -7,6 +7,12 @@ export default function CustomCursor() {
   const [hovered, setHovered] = useState(false);
 
   useEffect(() => {
+    const mediaQuery = window.matchMedia('(pointer: fine)');
+    if (!mediaQuery.matches) {
+      setHidden(true);
+      return;
+    }
+
     const handleMouseMove = (e) => {
       setPosition({ x: e.clientX, y: e.clientY });
       if (hidden) setHidden(false);

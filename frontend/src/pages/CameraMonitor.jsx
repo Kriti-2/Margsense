@@ -752,7 +752,7 @@ export default function CameraMonitor() {
 
       {/* Terminal log panel */}
       <div className="rounded-xl border border-command-border bg-command-panel p-6 space-y-3">
-        <div className="flex items-center justify-between border-b border-command-border pb-3">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between border-b border-command-border pb-3">
           <div className="flex items-center gap-2">
             <span className="text-xl">🖥️</span>
             <div>
@@ -761,7 +761,7 @@ export default function CameraMonitor() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
             {/* Toggle YOLO Mode */}
             <div className="flex items-center gap-2">
               <span className="text-xs text-gray-400 font-medium">YOLO Detection:</span>

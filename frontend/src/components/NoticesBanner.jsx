@@ -539,7 +539,7 @@ export default function NoticesBanner() {
 
             {/* Nav arrows */}
             {activeNotices.length > 1 && (
-              <div className="flex items-center bg-command-bg/40 border border-command-border/40 rounded-xl p-1">
+              <div className="hidden md:flex items-center bg-command-bg/40 border border-command-border/40 rounded-xl p-1">
                 <button onClick={goPrev} className="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-white/5 cursor-pointer">
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
                 </button>
