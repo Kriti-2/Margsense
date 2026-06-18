@@ -10,7 +10,7 @@ const CAMERAS = [
     lat: 12.9177, 
     lng: 77.6225, 
     zone: 'Silk Board', 
-    videoUrl: '/traffic video/12968627_3840_2160_30fps.mp4',
+    videoUrl: '/traffic_video/12968627_3840_2160_30fps.mp4',
     violationPos: { top: '55%', left: '8%' }, 
     violationType: 'PARKING ON FOOTPATH'
   },
@@ -20,7 +20,7 @@ const CAMERAS = [
     lat: 12.9352, 
     lng: 77.6245, 
     zone: 'Koramangala', 
-    videoUrl: '/traffic video/12972416_3840_2160_30fps.mp4',
+    videoUrl: '/traffic_video/12972416_3840_2160_30fps.mp4',
     violationPos: { top: '65%', left: '80%' }, 
     violationType: 'NO PARKING'
   },
@@ -30,7 +30,7 @@ const CAMERAS = [
     lat: 12.9750, 
     lng: 77.6063, 
     zone: 'MG Road', 
-    videoUrl: '/traffic video/14278220_3840_2160_30fps.mp4', // Swapped (parking view)
+    videoUrl: '/traffic_video/14278220_3840_2160_30fps.mp4', // Swapped (parking view)
     violationPos: { top: '48%', left: '42%' }, 
     violationType: 'OBSTRUCTING TRAFFIC'
   },
@@ -40,7 +40,7 @@ const CAMERAS = [
     lat: 12.9784, 
     lng: 77.6408, 
     zone: 'Indiranagar', 
-    videoUrl: '/traffic video/13654799_1920_1080_30fps.mp4', // Swapped (street view)
+    videoUrl: '/traffic_video/13654799_1920_1080_30fps.mp4', // Swapped (street view)
     violationPos: { top: '75%', left: '15%' }, 
     violationType: 'DOUBLE PARKING'
   },
