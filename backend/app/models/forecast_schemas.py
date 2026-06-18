@@ -13,6 +13,7 @@ class PredictionZone(BaseModel):
     latitude: float
     longitude: float
     drivers: list[str] = Field(default_factory=list)
+    weather_boosted: bool = False
 
 
 class ForecastResponse(BaseModel):
@@ -20,3 +21,5 @@ class ForecastResponse(BaseModel):
     horizon_hours: int = 24
     top_risk_zones: list[PredictionZone]
     model: str = "Prophet"
+    weather_escalation: dict | None = None
+

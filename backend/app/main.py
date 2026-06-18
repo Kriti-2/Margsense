@@ -24,6 +24,7 @@ from app.routes import (
     recidivism,
     severity,
     shift_planner,
+    weather,
 )
 from app.services.realtime_engine import get_realtime_engine
 from app.services.realtime_hub import get_realtime_hub
@@ -138,6 +139,7 @@ def create_app() -> FastAPI:
     app.include_router(live.router)
     app.include_router(jobs.router)
     app.include_router(public.router)
+    app.include_router(weather.router)
 
     @app.get("/")
     @limiter.limit(lambda: get_settings().rate_limit_public)
@@ -167,6 +169,7 @@ def create_app() -> FastAPI:
                 "/ingest/violation",
                 "/jobs/warm-caches",
                 "/jobs/prophet-forecast",
+                "/weather",
                 "/auth/register",
                 "/auth/google/login",
                 "/public/congestion-preview",

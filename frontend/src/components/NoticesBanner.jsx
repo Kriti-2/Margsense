@@ -8,14 +8,150 @@ export default function NoticesBanner() {
   const [notices, setNotices] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [dismissedIds, setDismissedIds] = useState([]);
+  const [dismissedIds, setDismissedIds] = useState(() => {
+    try {
+      const s = localStorage.getItem('parksense_dismissed_notices');
+      return s ? JSON.parse(s) : [];
+    } catch {
+      return [];
+    }
+  });
   const [selectedNotice, setSelectedNotice] = useState(null);
   const [isListViewOpen, setIsListViewOpen] = useState(false);
 
   // Language & HUD
-  const [lang, setLang] = useState('en'); // 'en' or 'hi'
-  const [isCrazyMode, setIsCrazyMode] = useState(true);
-  const [isMuted, setIsMuted] = useState(false);
+  const [lang, setLang] = useState(() => {
+    try {
+      return localStorage.getItem('parksense_lang') || 'en';
+    } catch {
+      return 'en';
+    }
+  });
+  const [isCrazyMode, setIsCrazyMode] = useState(() => {
+    try {
+      const s = localStorage.getItem('parksense_crazy_mode');
+      return s !== null ? JSON.parse(s) : true;
+    } catch {
+      return true;
+    }
+  });
+  const [isMuted, setIsMuted] = useState(() => {
+    try {
+      const s = localStorage.getItem('parksense_mute_mode');
+      return s !== null ? JSON.parse(s) : false;
+    } catch {
+      return false;
+    }
+  });
+
+  // ── Voice / Speech Synthesis ──
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [voices, setVoices] = useState([]);
+  const synthRef = useRef(typeof window !== 'undefined' ? window.speechSynthesis : null);
+  const utteranceRef = useRef(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      const updateVoices = () => {
+        if (window.speechSynthesis) {
+          setVoices(window.speechSynthesis.getVoices());
+        }
+      };
+      updateVoices();
+      window.speechSynthesis.onvoiceschanged = updateVoices;
+      return () => {
+        if (window.speechSynthesis) {
+          window.speechSynthesis.onvoiceschanged = null;
+        }
+      };
+    }
+  }, []);
+
+  // Diagnostic log for voices
+  useEffect(() => {
+    if (voices.length > 0) {
+      console.log("ParkSense TTS available voices:", voices.map(v => `${v.name} (${v.lang})`));
+      const hiVoices = voices.filter(v => v.lang.toLowerCase().includes('hi') || v.name.toLowerCase().includes('hindi'));
+      console.log("Hindi voices loaded:", hiVoices.map(v => `${v.name} (${v.lang})`));
+    }
+  }, [voices]);
+
+  const stopSpeaking = useCallback(() => {
+    if (synthRef.current) {
+      synthRef.current.cancel();
+    }
+    setIsSpeaking(false);
+  }, []);
+
+  const speakNotice = useCallback((noticeText) => {
+    const synth = synthRef.current;
+    if (!synth) return;
+
+    if (synth.speaking && isSpeaking) {
+      synth.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+
+    synth.cancel();
+
+    setTimeout(() => {
+      const utterance = new SpeechSynthesisUtterance(noticeText);
+      utteranceRef.current = utterance;
+      utterance.lang = lang === 'en' ? 'en-US' : 'hi-IN';
+
+      const availableVoices = voices.length ? voices : synth.getVoices();
+      let voice = null;
+      if (lang === 'hi') {
+        // 1. Try exact matches
+        voice = availableVoices.find(v => {
+          const l = v.lang.toLowerCase();
+          return l === 'hi-in' || l === 'hi_in';
+        });
+        // 2. Try prefix matches (starts with hi)
+        if (!voice) {
+          voice = availableVoices.find(v => v.lang.toLowerCase().startsWith('hi'));
+        }
+        // 3. Try name contains hindi or india
+        if (!voice) {
+          voice = availableVoices.find(v => v.name.toLowerCase().includes('hindi') || v.name.toLowerCase().includes('india'));
+        }
+      } else {
+        voice = availableVoices.find(v => v.lang.toLowerCase().includes('en-us') || v.lang.toLowerCase().includes('en-gb') || v.lang.toLowerCase().includes('en'));
+      }
+
+      if (voice) {
+        utterance.voice = voice;
+      }
+
+      utterance.onstart = () => {
+        setIsSpeaking(true);
+      };
+
+      utterance.onend = () => {
+        setIsSpeaking(false);
+      };
+
+      utterance.onerror = (e) => {
+        console.warn("Speech synthesis error status:", e.error);
+        setIsSpeaking(false);
+      };
+
+      synth.speak(utterance);
+    }, 50);
+  }, [lang, isSpeaking, voices]);
+
+  useEffect(() => {
+    stopSpeaking();
+  }, [currentIndex, lang, stopSpeaking]);
+
+  useEffect(() => {
+    return () => {
+      if (synthRef.current) {
+        synthRef.current.cancel();
+      }
+    };
+  }, []);
 
   // Interactive: expanded inline preview on hover
   const [isExpanded, setIsExpanded] = useState(false);
@@ -70,36 +206,26 @@ export default function NoticesBanner() {
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
         osc.start(); osc.stop(ctx.currentTime + 0.1);
       }
-    } catch (e) { /* silent */ }
+    } catch { /* silent */ }
   }, [isMuted]);
 
-  // ── LocalStorage init ──
   useEffect(() => {
-    try {
-      const s1 = localStorage.getItem('parksense_dismissed_notices');
-      if (s1) setDismissedIds(JSON.parse(s1));
-      const s2 = localStorage.getItem('parksense_crazy_mode');
-      if (s2 !== null) setIsCrazyMode(JSON.parse(s2));
-      const s3 = localStorage.getItem('parksense_mute_mode');
-      if (s3 !== null) setIsMuted(JSON.parse(s3));
-      const s4 = localStorage.getItem('parksense_lang');
-      if (s4) setLang(s4);
-    } catch (e) { console.error(e); }
+    let active = true;
+    const load = async () => {
+      try {
+        const { data } = await api.getNotices();
+        if (active && data?.notices) setNotices(data.notices);
+      } catch (err) {
+        console.error('Failed to fetch notices:', err);
+      }
+    };
+    load();
+    const id = setInterval(load, 60000);
+    return () => {
+      active = false;
+      clearInterval(id);
+    };
   }, []);
-
-  // ── Fetch notices ──
-  const fetchNotices = useCallback(async () => {
-    try {
-      const { data } = await api.getNotices();
-      if (data?.notices) setNotices(data.notices);
-    } catch (err) { console.error('Failed to fetch notices:', err); }
-  }, []);
-
-  useEffect(() => {
-    fetchNotices();
-    const id = setInterval(fetchNotices, 60000);
-    return () => clearInterval(id);
-  }, [fetchNotices]);
 
   // ── Active notices ──
   const activeNotices = useMemo(
@@ -107,20 +233,22 @@ export default function NoticesBanner() {
     [notices, dismissedIds]
   );
 
-  useEffect(() => {
-    if (currentIndex >= activeNotices.length && activeNotices.length > 0) setCurrentIndex(0);
-  }, [activeNotices.length, currentIndex]);
+  const safeCurrentIndex = useMemo(() => {
+    return currentIndex >= activeNotices.length ? 0 : currentIndex;
+  }, [currentIndex, activeNotices.length]);
 
   // ── Auto-cycle with progress bar ──
   useEffect(() => {
-    if (activeNotices.length <= 1 || isPaused || selectedNotice || isListViewOpen || isExpanded) {
+    if (activeNotices.length <= 1 || isPaused || selectedNotice || isListViewOpen || isExpanded || isSpeaking) {
       // Freeze progress
       if (progressRef.current) cancelAnimationFrame(progressRef.current);
       if (cycleTimerRef.current) clearTimeout(cycleTimerRef.current);
       return;
     }
 
-    setProgress(0);
+    const startProgressId = setTimeout(() => {
+      setProgress(0);
+    }, 0);
     let start = performance.now();
 
     const animate = (now) => {
@@ -138,10 +266,11 @@ export default function NoticesBanner() {
     }, CYCLE_DURATION);
 
     return () => {
+      clearTimeout(startProgressId);
       if (progressRef.current) cancelAnimationFrame(progressRef.current);
       if (cycleTimerRef.current) clearTimeout(cycleTimerRef.current);
     };
-  }, [activeNotices.length, isPaused, selectedNotice, isListViewOpen, isExpanded, currentIndex]);
+  }, [activeNotices.length, isPaused, selectedNotice, isListViewOpen, isExpanded, currentIndex, isSpeaking]);
 
   // ── Translation dictionary ──
   const translate = useCallback((notice) => {
@@ -217,7 +346,7 @@ export default function NoticesBanner() {
           g.gain.setValueAtTime(0.04, ctx.currentTime);
           g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
           o.start(); o.stop(ctx.currentTime + 0.1);
-        } catch(e){}
+        } catch { /* silent */ }
       }, 50);
     }
   };
@@ -231,7 +360,7 @@ export default function NoticesBanner() {
 
   // ── Bail if nothing to show ──
   if (activeNotices.length === 0) return null;
-  const cur = activeNotices[currentIndex];
+  const cur = activeNotices[safeCurrentIndex];
   const tr = translate(cur);
   const t = tr[lang]; // current language text
 
@@ -272,6 +401,10 @@ export default function NoticesBanner() {
         @keyframes scanline-slide { 0%{transform:translateY(-100%)} 100%{transform:translateY(100%)} }
         @keyframes holo-flicker { 0%,100%{opacity:.97} 50%{opacity:.88; filter:hue-rotate(3deg)} }
         @keyframes grid-breathe { 0%,100%{opacity:.05} 50%{opacity:.14} }
+        @keyframes voiceWave {
+          0%, 100% { transform: scaleY(0.3); }
+          50% { transform: scaleY(1.1); }
+        }
         .cyber-grid {
           background-size:20px 20px;
           background-image:linear-gradient(to right,rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,.05) 1px,transparent 1px);
@@ -384,28 +517,24 @@ export default function NoticesBanner() {
               <span className={`px-3 py-1 text-xs font-black transition-all ${lang === 'hi' ? 'bg-command-accent text-white' : 'text-gray-400 group-hover:text-white'}`}>हि</span>
             </button>
 
-            {/* Sound toggle */}
-            <button onClick={(e) => { e.stopPropagation(); toggleMute(); }}
-              className="p-2 rounded-xl border border-command-border/40 hover:bg-white/5 text-gray-400 hover:text-white transition-all cursor-pointer" title={isMuted ? 'Unmute' : 'Mute'}>
-              {isMuted ? (
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-                </svg>
+            {/* Voice Read Aloud button */}
+            <button onClick={(e) => { e.stopPropagation(); speakNotice(`${t.title}. ${t.message}`); }}
+              className={`p-2 rounded-xl border transition-all cursor-pointer ${
+                isSpeaking ? 'bg-command-accent/15 border-command-accent/40 text-command-accent shadow-[0_0_8px_rgba(59,130,246,0.25)]' 
+                  : 'border-command-border/40 text-gray-400 hover:text-white hover:bg-white/5'}`}
+              title={isSpeaking ? 'Stop Listening' : 'Listen to News'}>
+              {isSpeaking ? (
+                <div className="flex items-end gap-[2px] h-5 w-5 justify-center pb-1">
+                  <span className="w-[3px] h-2 bg-command-accent rounded-full origin-bottom animate-[voiceWave_0.8s_infinite_ease-in-out]"></span>
+                  <span className="w-[3px] h-3.5 bg-command-accent rounded-full origin-bottom animate-[voiceWave_0.8s_infinite_ease-in-out_0.2s]"></span>
+                  <span className="w-[3px] h-2.5 bg-command-accent rounded-full origin-bottom animate-[voiceWave_0.8s_infinite_ease-in-out_0.4s]"></span>
+                  <span className="w-[3px] h-4 bg-command-accent rounded-full origin-bottom animate-[voiceWave_0.8s_infinite_ease-in-out_0.1s]"></span>
+                </div>
               ) : (
-                <svg className="h-5 w-5 text-command-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V9a9 9 0 00-18 0v10a2 2 0 002 2zm8-6v-4m-8 4v-4" />
                 </svg>
               )}
-            </button>
-
-            {/* HUD toggle */}
-            <button onClick={(e) => { e.stopPropagation(); toggleHud(); }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black border transition-all cursor-pointer ${
-                isCrazyMode ? 'bg-green-500/15 border-green-500/40 text-green-400 hover:bg-green-500/25 shadow-[0_0_8px_rgba(34,197,94,0.15)]'
-                  : 'border-command-border/60 text-gray-400 hover:text-white hover:bg-white/5'}`}
-              title="Toggle HUD mode">
-              {isCrazyMode ? '⚡ HUD' : '○ HUD'}
             </button>
 
             {/* Nav arrows */}
@@ -414,7 +543,7 @@ export default function NoticesBanner() {
                 <button onClick={goPrev} className="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-white/5 cursor-pointer">
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
                 </button>
-                <span className="text-xs font-black text-gray-400 px-2 select-none font-mono">{currentIndex + 1}/{activeNotices.length}</span>
+                <span className="text-xs font-black text-gray-400 px-2 select-none font-mono">{safeCurrentIndex + 1}/{activeNotices.length}</span>
                 <button onClick={goNext} className="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-white/5 cursor-pointer">
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
                 </button>
@@ -501,11 +630,29 @@ export default function NoticesBanner() {
                         <span className={`px-1.5 text-[8px] font-black ${lang === 'en' ? 'bg-command-accent text-white' : 'text-gray-400'}`}>EN</span>
                         <span className={`px-1.5 text-[8px] font-black ${lang === 'hi' ? 'bg-command-accent text-white' : 'text-gray-400'}`}>हि</span>
                       </button>
+
+                      {/* Voice Read Aloud inside modal */}
+                      <button onClick={() => speakNotice(`${selT.title}. ${selT.message}`)}
+                        className={`flex items-center justify-center h-5 w-5 rounded-full border cursor-pointer hover:border-command-accent/40 ${
+                          isSpeaking ? 'bg-command-accent/15 border-command-accent/30 text-command-accent' : 'border-command-border/50 bg-command-bg/40 text-gray-400 hover:text-white'}`}
+                        title={isSpeaking ? 'Stop Listening' : 'Listen'}>
+                        {isSpeaking ? (
+                          <div className="flex items-end gap-[1.5px] h-3 justify-center pb-[1px]">
+                            <span className="w-[2px] h-2 bg-command-accent rounded-full origin-bottom animate-[voiceWave_0.8s_infinite_ease-in-out]"></span>
+                            <span className="w-[2px] h-3 bg-command-accent rounded-full origin-bottom animate-[voiceWave_0.8s_infinite_ease-in-out_0.2s]"></span>
+                            <span className="w-[2px] h-1.5 bg-command-accent rounded-full origin-bottom animate-[voiceWave_0.8s_infinite_ease-in-out_0.4s]"></span>
+                          </div>
+                        ) : (
+                          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V9a9 9 0 00-18 0v10a2 2 0 002 2zm8-6v-4m-8 4v-4" />
+                          </svg>
+                        )}
+                      </button>
                     </div>
                     <h3 className="text-lg font-extrabold text-white mt-1.5 uppercase tracking-tight">{selT.title}</h3>
                   </div>
                 </div>
-                <button onClick={() => { playSynthSound('click'); setSelectedNotice(null); }}
+                <button onClick={() => { playSynthSound('click'); stopSpeaking(); setSelectedNotice(null); }}
                   className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl cursor-pointer">
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
@@ -528,12 +675,12 @@ export default function NoticesBanner() {
               </div>
 
               <div className="flex justify-end gap-3 mt-6 relative z-20">
-                <button onClick={(e) => { dismiss(e, selectedNotice.id); setSelectedNotice(null); }}
+                <button onClick={(e) => { dismiss(e, selectedNotice.id); stopSpeaking(); setSelectedNotice(null); }}
                   className="px-5 py-2.5 border border-command-border rounded-xl text-xs font-bold text-gray-300 hover:text-white hover:bg-white/5 cursor-pointer">
                   {lang === 'en' ? 'Dismiss Notice' : 'सूचना खारिज करें'}
                 </button>
                 {selectedNotice.type === 'traffic' && location.pathname !== '/congestion' && (
-                  <button onClick={() => deepLink(selectedNotice)}
+                  <button onClick={() => { stopSpeaking(); deepLink(selectedNotice); }}
                     className="px-5 py-2.5 bg-command-accent rounded-xl text-xs font-black text-white hover:bg-command-accent/90 shadow-lg shadow-command-accent/20 hover:scale-[1.02] cursor-pointer transition-transform">
                     {lang === 'en' ? 'AVOID CONGESTION →' : 'भीड़ से बचें →'}
                   </button>

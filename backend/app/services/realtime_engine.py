@@ -127,6 +127,14 @@ class RealtimeEngine:
             ],
         }
 
+        # Attach weather data to live tick
+        try:
+            from app.services.weather_service import get_weather_service
+
+            payload["weather"] = get_weather_service().get_weather().to_dict()
+        except Exception:
+            payload["weather"] = None
+
         self._last_tick = payload
         store.refresh_live_caches(
             recent,

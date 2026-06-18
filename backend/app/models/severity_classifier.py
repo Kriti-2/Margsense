@@ -10,7 +10,7 @@ from app.utilities.constants import BENGALURU_ZONES, VEHICLE_SEVERITY_WEIGHTS
 class ViolationSeverityClassifier:
     """Classify parking violations as LOW, MEDIUM, or CRITICAL."""
 
-    def classify(self, data: ViolationSeverityInput) -> ViolationSeverityResult:
+    def classify(self, data: ViolationSeverityInput, weather_severity_boost: float = 0.0) -> ViolationSeverityResult:
         vehicle_weight = VEHICLE_SEVERITY_WEIGHTS.get(data.vehicle_type.upper(), 0.55)
         lane_width = data.lane_width_m or BENGALURU_ZONES.get(data.zone, {}).get("lane_width_m", 7.0)
 
@@ -26,6 +26,9 @@ class ViolationSeverityClassifier:
             + intersection_factor * 15
             + multi_violation_factor * 5
         )
+
+        # Apply weather boost (rain/monsoon escalation)
+        score = score + weather_severity_boost
         score = min(100.0, score)
 
         if score >= 70:
@@ -50,8 +53,9 @@ class ViolationSeverityClassifier:
                 "near_intersection": data.near_intersection,
                 "intersection_factor": round(intersection_factor, 2),
                 "violation_count": len(data.violation_types),
+                "weather_boost": round(weather_severity_boost, 2),
             },
         )
 
-    def classify_batch(self, items: list[ViolationSeverityInput]) -> list[ViolationSeverityResult]:
-        return [self.classify(item) for item in items]
+    def classify_batch(self, items: list[ViolationSeverityInput], weather_severity_boost: float = 0.0) -> list[ViolationSeverityResult]:
+        return [self.classify(item, weather_severity_boost=weather_severity_boost) for item in items]

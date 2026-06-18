@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Popup, LayersControl } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { api } from '../api/client';
 import { useLiveFeed } from '../hooks/useLiveFeed';
@@ -58,7 +58,26 @@ export default function UserCongestion() {
 
       <div className="h-96 overflow-hidden rounded-xl border border-command-border">
         <MapContainer center={BENGALURU_CENTER} zoom={11} style={{ height: '100%' }}>
-          <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+        <LayersControl position="topright">
+          <LayersControl.BaseLayer checked name="Google Streets">
+            <TileLayer
+              attribution="&copy; Google Maps"
+              url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+            />
+          </LayersControl.BaseLayer>
+          <LayersControl.BaseLayer name="Google Satellite">
+            <TileLayer
+              attribution="&copy; Google Maps"
+              url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
+            />
+          </LayersControl.BaseLayer>
+          <LayersControl.BaseLayer name="Dark Mode">
+            <TileLayer
+              attribution="&copy; CartoDB"
+              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            />
+          </LayersControl.BaseLayer>
+        </LayersControl>
           {zones.map((zone) => (
             <CircleMarker
               key={zone.zone}

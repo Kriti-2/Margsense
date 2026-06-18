@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Popup, useMap, LayersControl } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
 const BENGALURU_CENTER = [12.9716, 77.5946];
@@ -48,10 +48,26 @@ export default function HeatMap({ data, zoneIntensity = {}, height = '400px' }) 
   return (
     <div className="overflow-hidden rounded-xl border border-command-border" style={{ height }}>
       <MapContainer center={BENGALURU_CENTER} zoom={12} scrollWheelZoom style={{ height: '100%' }}>
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        />
+        <LayersControl position="topright">
+          <LayersControl.BaseLayer checked name="Google Streets">
+            <TileLayer
+              attribution="&copy; Google Maps"
+              url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+            />
+          </LayersControl.BaseLayer>
+          <LayersControl.BaseLayer name="Google Satellite">
+            <TileLayer
+              attribution="&copy; Google Maps"
+              url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
+            />
+          </LayersControl.BaseLayer>
+          <LayersControl.BaseLayer name="Dark Mode">
+            <TileLayer
+              attribution="&copy; CartoDB"
+              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            />
+          </LayersControl.BaseLayer>
+        </LayersControl>
         <FitBounds features={features} />
         {features.slice(0, 1500).map((feature, idx) => {
           const [lon, lat] = feature.geometry.coordinates;

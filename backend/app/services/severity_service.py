@@ -16,6 +16,18 @@ def build_severity_response(df: pd.DataFrame, limit: int = 50) -> dict:
     else:
         recent = df.tail(limit)
 
+    # Fetch weather severity boost
+    weather_severity_boost = 0.0
+    weather_info = None
+    try:
+        from app.services.weather_service import get_weather_service
+
+        weather = get_weather_service().get_weather()
+        weather_severity_boost = weather.severity_boost
+        weather_info = weather.to_dict()
+    except Exception:
+        pass
+
     classifier = ViolationSeverityClassifier()
     queue = []
 
@@ -36,7 +48,8 @@ def build_severity_response(df: pd.DataFrame, limit: int = 50) -> dict:
                 latitude=float(row["latitude"]) if pd.notna(row.get("latitude")) else None,
                 longitude=float(row["longitude"]) if pd.notna(row.get("longitude")) else None,
                 violation_types=row.get("violation_types", []),
-            )
+            ),
+            weather_severity_boost=weather_severity_boost,
         )
         queue.append(result.model_dump())
 
@@ -54,4 +67,6 @@ def build_severity_response(df: pd.DataFrame, limit: int = 50) -> dict:
         "queue": queue,
         "summary": summary,
         "total": len(queue),
+        "weather": weather_info,
     }
+

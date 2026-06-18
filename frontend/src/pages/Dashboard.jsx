@@ -4,11 +4,13 @@ import { useLiveFeed } from '../hooks/useLiveFeed';
 import KPICard from '../components/KPICard';
 import HeatMap from '../components/HeatMap';
 import CongestionDebt from '../components/CongestionDebt';
+import ROICard from '../components/ROICard';
 import EnforcementBrief from '../components/EnforcementBrief';
 import SeverityQueue from '../components/SeverityQueue';
 import RecidivismMap from '../components/RecidivismMap';
 import TimeLapse from '../components/TimeLapse';
 import LiveStatusBar from '../components/LiveStatusBar';
+import WeatherBanner from '../components/WeatherBanner';
 
 function formatINR(amount) {
   if (amount >= 100000) return `₹${(amount / 100000).toFixed(1)}L`;
@@ -129,6 +131,11 @@ export default function Dashboard() {
         <LiveStatusBar connected={connected} status={status} lastTick={lastTick} />
       </div>
 
+      <WeatherBanner
+        weatherData={predictions?.weather_escalation}
+        liveWeather={lastTick?.weather}
+      />
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KPICard
           title="Total Violations"
@@ -156,11 +163,13 @@ export default function Dashboard() {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <div className="xl:col-span-2">
-          <HeatMap data={heatmap} zoneIntensity={heatmap?.zone_intensity} height="420px" />
-        </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <CongestionDebt analytics={analytics} />
+        <ROICard shiftData={shiftData} analytics={analytics} />
+      </div>
+
+      <div className="grid grid-cols-1 gap-6">
+        <HeatMap data={heatmap} zoneIntensity={heatmap?.zone_intensity} height="420px" />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">

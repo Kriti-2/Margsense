@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     average_wage_per_hour: float = 350.0
 
     weather_api_key: str = ""
+    weather_city: str = "Bengaluru,IN"
     google_maps_api_key: str = ""
     tomtom_api_key: str = ""
 

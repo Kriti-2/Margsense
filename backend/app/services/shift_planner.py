@@ -49,6 +49,11 @@ class ShiftPlannerService:
 
             shift = "Morning" if pred.peak_hour < 12 else "Evening"
 
+            officer_cost = officers * 1500.0
+            reduction_pct = min(0.60, officers * 0.15)
+            gross_savings = economic_impact * reduction_pct
+            estimated_savings = max(0.0, gross_savings - officer_cost)
+
             assignments.append(
                 ShiftAssignment(
                     zone=zone,
@@ -57,6 +62,8 @@ class ShiftPlannerService:
                     shift=shift,
                     expected_violations=pred.predicted_violations,
                     economic_impact_inr=round(economic_impact, 2),
+                    estimated_savings_inr=round(estimated_savings, 2),
+                    officer_cost_inr=round(officer_cost, 2),
                 )
             )
 
@@ -78,6 +85,15 @@ def build_shift_planner_response(df: pd.DataFrame, predictions: ForecastResponse
         for fp in congestion
     ]
     economic_losses = econ.calculate_all_zones(zone_metrics)
+
+    # Fetch weather severity boost for classification
+    weather_severity_boost = 0.0
+    try:
+        from app.services.weather_service import get_weather_service
+
+        weather_severity_boost = get_weather_service().get_weather().severity_boost
+    except Exception:
+        pass
 
     classifier = ViolationSeverityClassifier()
     severity_results: list[ViolationSeverityResult] = []
@@ -103,13 +119,24 @@ def build_shift_planner_response(df: pd.DataFrame, predictions: ForecastResponse
                         hour=int(hour),
                         near_intersection=bool(row.get("near_intersection", False)),
                         violation_types=row.get("violation_types", []),
-                    )
+                    ),
+                    weather_severity_boost=weather_severity_boost,
                 )
             )
 
     planner = ShiftPlannerService()
     assignments = planner.plan(predictions, economic_losses, severity_results)
     total_officers = sum(a.officers_recommended for a in assignments)
+
+    total_estimated_savings = round(sum(a.estimated_savings_inr for a in assignments), 2)
+    total_officer_cost = round(sum(a.officer_cost_inr for a in assignments), 2)
+    total_economic_impact = round(sum(a.economic_impact_inr for a in assignments), 2)
+    roi_percentage = round(
+        (total_estimated_savings / total_officer_cost * 100) if total_officer_cost > 0 else 0, 1
+    )
+    roi_ratio = round(
+        total_estimated_savings / total_officer_cost if total_officer_cost > 0 else 0, 2
+    )
 
     return {
         "generated_at": datetime.utcnow().isoformat(),
@@ -119,6 +146,10 @@ def build_shift_planner_response(df: pd.DataFrame, predictions: ForecastResponse
             "critical_zones": sum(1 for a in assignments if a.priority == "CRITICAL"),
             "high_priority_zones": sum(1 for a in assignments if a.priority == "HIGH"),
             "total_expected_violations": sum(a.expected_violations for a in assignments),
-            "total_economic_impact_inr": round(sum(a.economic_impact_inr for a in assignments), 2),
+            "total_economic_impact_inr": total_economic_impact,
+            "total_estimated_savings_inr": total_estimated_savings,
+            "total_officer_cost_inr": total_officer_cost,
+            "roi_percentage": roi_percentage,
+            "roi_ratio": roi_ratio,
         },
     }

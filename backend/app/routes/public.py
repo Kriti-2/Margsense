@@ -71,9 +71,149 @@ def congestion_preview(user: User = Depends(require_user)):
     }
 
 
+@router.get("/notices")
+def get_notices():
+    """
+    Get active notices and system alerts for citizens.
+    """
+    return {
+        "notices": [
+            {
+                "id": "civic-bbmp-orr",
+                "type": "circular",
+                "urgency": "high",
+                "source": "BBMP",
+                "timestamp": datetime.utcnow().isoformat(),
+                "title": "🚧 ORR Road Repair Commenced",
+                "message": "BBMP has initiated road repair and utility works on Outer Ring Road (ORR) near Silk Board junction. Expect significant delays.",
+            },
+            {
+                "id": "civic-smart-parking",
+                "type": "circular",
+                "urgency": "low",
+                "source": "DULT",
+                "timestamp": datetime.utcnow().isoformat(),
+                "title": "🚗 Indiranagar IoT Smart Parking Live",
+                "message": "New IoT-enabled smart parking slots are now live on Indiranagar 100 Feet Road. Book slots in real-time via ParkSense.",
+            },
+            {
+                "id": "civic-metro-extension",
+                "type": "circular",
+                "urgency": "low",
+                "source": "BMRCL",
+                "timestamp": datetime.utcnow().isoformat(),
+                "title": "🚌 Metro Feeder Bus Frequency Increased",
+                "message": "To reduce congestion, BMRCL has increased feeder bus frequency from Indiranagar Metro Station to IT hubs during peak hours.",
+            },
+            {
+                "id": "traffic-slowdown-silk-board",
+                "type": "traffic",
+                "urgency": "high",
+                "source": "BTP",
+                "timestamp": datetime.utcnow().isoformat(),
+                "title": "Traffic Slowdown: Silk Board Junction",
+                "message": "Speeds reduced by 65% near Silk Board Junction due to illegal parking. Alternate routes advised.",
+            }
+        ]
+    }
+
+
 def _tip_for_zone(zone: str, advisory: str, drop_pct: float) -> str:
     if advisory == "AVOID":
         return f"High congestion ({drop_pct:.0f}% speed drop) in {zone}. Take alternate route or metro."
     if advisory == "CAUTION":
         return f"Moderate delays expected in {zone}. Allow 15+ extra minutes."
     return f"{zone} is flowing well. Good time to travel."
+
+
+@router.get("/challan-lookup/{vehicle_number}")
+def challan_lookup(vehicle_number: str, user: User = Depends(require_user)):
+    """
+    Search parking violations, calculate fine details and the Civic Standing Score
+    for a given vehicle license plate.
+    """
+    import pandas as pd
+    
+    # 1. Sanitize plate inputs
+    def sanitize_plate(plate: str) -> str:
+        if not isinstance(plate, str):
+            return ""
+        return "".join(c for c in plate if c.isalnum()).upper()
+
+    search_clean = sanitize_plate(vehicle_number)
+    
+    # 2. Get violations
+    store = get_data_store()
+    df = store.load()
+    
+    # 3. Fine pricing map
+    fine_pricing = {
+        "NO PARKING": 500,
+        "DOUBLE PARKING": 1000,
+        "WRONG SIDE PARKING": 1000,
+        "OBSTRUCTING TRAFFIC": 1500,
+        "PARKING ON FOOTPATH": 1500,
+    }
+
+    matching_violations = []
+    
+    if search_clean:
+        for _, row in df.iterrows():
+            p1 = sanitize_plate(row.get("updated_vehicle_number"))
+            p2 = sanitize_plate(row.get("vehicle_number"))
+            if search_clean == p1 or search_clean == p2:
+                # Calculate fine for this specific violation
+                v_types = row.get("violation_types", [])
+                if not v_types:
+                    v_types = [row.get("violation_type", "NO PARKING")]
+                
+                # Deduplicate and calculate fine
+                fine_sum = 0
+                for vt in v_types:
+                    fine_sum += fine_pricing.get(str(vt).upper().strip(), 500)
+                
+                matching_violations.append({
+                    "id": str(row.get("id")),
+                    "timestamp": str(row.get("created_datetime")),
+                    "zone": str(row.get("zone")),
+                    "latitude": float(row.get("latitude")) if pd.notna(row.get("latitude")) else None,
+                    "longitude": float(row.get("longitude")) if pd.notna(row.get("longitude")) else None,
+                    "violation_types": v_types,
+                    "fine_amount": fine_sum,
+                    "junction_name": str(row.get("junction_name", "No Junction")),
+                    "near_intersection": bool(row.get("near_intersection", False)),
+                    "vehicle_type": str(row.get("vehicle_type", "CAR")),
+                })
+
+    # Sort matching violations by timestamp descending
+    matching_violations.sort(key=lambda x: x["timestamp"], reverse=True)
+
+    total_violations = len(matching_violations)
+    total_fine = sum(v["fine_amount"] for v in matching_violations)
+    
+    # 4. Civic score: 100 - (25 per violation), capped at min 10
+    civic_score = max(10, 100 - (total_violations * 25))
+    
+    if total_violations == 0:
+        civic_rating = "Clean Commuter"
+        rating_color = "green"
+    elif total_violations == 1:
+        civic_rating = "Responsible Driver"
+        rating_color = "green"
+    elif total_violations <= 3:
+        civic_rating = "Needs Attention"
+        rating_color = "orange"
+    else:
+        civic_rating = "Chronic Offender"
+        rating_color = "red"
+
+    return {
+        "vehicle_number": vehicle_number,
+        "sanitized_vehicle_number": search_clean,
+        "total_violations": total_violations,
+        "total_fine": total_fine,
+        "civic_score": civic_score,
+        "civic_rating": civic_rating,
+        "rating_color": rating_color,
+        "violations": matching_violations
+    }

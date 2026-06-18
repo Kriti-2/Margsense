@@ -158,6 +158,27 @@ class ParkPredictForecaster:
                 else self._mock_forecast()
             )
 
+        # --- Weather escalation ---
+        weather_escalation = None
+        weather_boosted = False
+        try:
+            from app.services.weather_service import get_weather_service
+
+            weather = get_weather_service().get_weather()
+            if weather.multiplier > 1.0:
+                weather_boosted = True
+                for zf in zone_forecasts:
+                    zf["predicted"] = int(round(zf["predicted"] * weather.multiplier))
+                logger.info(
+                    "Weather escalation applied: %s (%.1fx) — %s",
+                    weather.condition,
+                    weather.multiplier,
+                    weather.description,
+                )
+            weather_escalation = weather.to_dict()
+        except Exception as exc:
+            logger.warning("Weather escalation skipped: %s", exc)
+
         zone_forecasts.sort(key=lambda x: x["predicted"], reverse=True)
         top_10 = zone_forecasts[:10]
 
@@ -174,6 +195,8 @@ class ParkPredictForecaster:
                 drivers.append("Evening peak commute")
             if item["zone"] in ("Silk Board", "MG Road"):
                 drivers.append("High commercial density")
+            if weather_boosted:
+                drivers.append("Monsoon/rain risk escalation")
             if not drivers:
                 drivers.append("Historical violation pattern")
 
@@ -188,6 +211,7 @@ class ParkPredictForecaster:
                     latitude=meta["center"][0],
                     longitude=meta["center"][1],
                     drivers=drivers,
+                    weather_boosted=weather_boosted,
                 )
             )
 
@@ -195,4 +219,6 @@ class ParkPredictForecaster:
             generated_at=datetime.utcnow(),
             horizon_hours=24,
             top_risk_zones=predictions,
+            weather_escalation=weather_escalation,
         )
+

@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLiveFeed } from '../hooks/useLiveFeed';
 import { useState, useCallback } from 'react';
 import LiveStatusBar from '../components/LiveStatusBar';
+import NoticesBanner from '../components/NoticesBanner';
 
 export default function UserLayout({ children }) {
   const { user, logout } = useAuth();
@@ -24,6 +25,7 @@ export default function UserLayout({ children }) {
 
   return (
     <div className="min-h-screen bg-command-bg">
+      <NoticesBanner />
       <header className="border-b border-command-border bg-command-panel px-6 py-4">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">

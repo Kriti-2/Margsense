@@ -5,6 +5,7 @@ import { useLiveFeed } from '../hooks/useLiveFeed';
 import HeatMap from '../components/HeatMap';
 import ShiftPlanner from '../components/ShiftPlanner';
 import LiveStatusBar from '../components/LiveStatusBar';
+import WeatherBanner from '../components/WeatherBanner';
 
 const RISK_COLORS = ['#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e'];
 
@@ -66,6 +67,11 @@ export default function Predict() {
         <LiveStatusBar connected={connected} status={status} lastTick={lastTick} />
       </div>
 
+      <WeatherBanner
+        weatherData={predictions?.weather_escalation}
+        liveWeather={lastTick?.weather}
+      />
+
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <div className="rounded-xl border border-command-border bg-command-panel p-6">
           <h3 className="text-lg font-semibold text-white">Risk Rankings</h3>
@@ -98,7 +104,14 @@ export default function Predict() {
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
                   <span className="font-semibold text-white">{zone.zone}</span>
+                  {zone.weather_boosted && (
+                    <span className="rounded bg-command-warning/20 px-1.5 py-0.5 text-[10px] font-bold text-command-warning">
+                      🌧️ Rain
+                    </span>
+                  )}
+                </div>
                   <span className="text-sm font-bold text-command-danger">Risk {zone.risk_score}</span>
                 </div>
                 <p className="mt-1 text-xs text-gray-400">

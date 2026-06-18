@@ -29,3 +29,6 @@ class ShiftAssignment(BaseModel):
     shift: str
     expected_violations: int
     economic_impact_inr: float
+    estimated_savings_inr: float = 0.0
+    officer_cost_inr: float = 0.0
+
