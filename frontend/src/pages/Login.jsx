@@ -63,7 +63,7 @@ export default function Login() {
   }
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden transition-colors duration-300 bg-slate-950">
+    <div className="relative min-h-screen w-full overflow-y-auto flex flex-col items-center justify-center py-10 transition-colors duration-300 bg-slate-950">
       
       {/* 4K 60fps Loop Video Background (Autoplay, Loop, Muted, GPU-accelerated) */}
       <video
@@ -81,7 +81,7 @@ export default function Login() {
       <div className="fixed inset-0 z-0 bg-[linear-gradient(rgba(18,24,38,0.25)_1px,transparent_1px),linear-gradient(90deg,rgba(18,24,38,0.25)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none opacity-40" />
 
       {/* Floating Theme Toggle Switch at Top Right */}
-      <div className="absolute top-5 right-5 z-20 pointer-events-auto">
+      <div className="fixed top-5 right-5 z-20 pointer-events-auto">
         <button
           type="button"
           onClick={() => setIsDark(!isDark)}
@@ -104,7 +104,7 @@ export default function Login() {
       </div>
 
       {/* Centered High-Fidelity Login Card (GPU accelerated to avoid lag over 4K video) */}
-      <div className="absolute inset-0 z-10 flex items-center justify-center px-4 py-8 pointer-events-none">
+      <div className="z-10 flex items-center justify-center px-4 w-full pointer-events-none">
         <div className="w-full max-w-[370px] rounded-3xl border border-white/10 dark:border-teal-500/20 bg-white/[0.01] dark:bg-black/[0.05] px-9 py-10 text-white shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-lg transition-all duration-300 transform-gpu will-change-transform pointer-events-auto">
           
           {/* Logo, Header, and Pulsing Live Badge */}
