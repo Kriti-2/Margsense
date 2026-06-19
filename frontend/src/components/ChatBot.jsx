@@ -97,18 +97,115 @@ export default function ChatBot({ context = 'dashboard' }) {
       {/* Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 p-4 bg-gradient-to-r from-[#BA5A5A] to-[#E28F8F] text-white rounded-full shadow-[0_4px_20px_rgba(186,90,90,0.4)] hover:shadow-[0_6px_25px_rgba(186,90,90,0.6)] hover:scale-110 transition-all z-[9999] flex items-center justify-center cursor-pointer group"
+        className="fixed bottom-6 right-6 z-[9999] cursor-pointer group select-none transition-all duration-300 active:scale-95 focus:outline-none"
         aria-label="Toggle AI Assistant"
       >
-        <div className="absolute inset-0 rounded-full bg-white opacity-0 group-hover:opacity-20 transition-opacity"></div>
         {isOpen ? (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 relative z-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <div className="w-16 h-16 rounded-full bg-gradient-to-r from-[#BA5A5A] to-[#E28F8F] text-white shadow-[0_4px_20px_rgba(186,90,90,0.4)] flex items-center justify-center transition-all duration-300 hover:scale-110">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 relative z-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
         ) : (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 relative z-10 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
-          </svg>
+          <div className="relative w-[78px] h-[78px] flex items-center justify-center transition-all duration-300">
+            {/* Pulsing glow ring for popping effect */}
+            <span className="absolute inset-2 rounded-full bg-[#BA5A5A] opacity-20 group-hover:opacity-40 animate-ping pointer-events-none"></span>
+            
+            <svg
+              width="100%"
+              height="100%"
+              viewBox="0 0 100 100"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="relative filter drop-shadow-[0_4px_12px_rgba(186,90,90,0.35)] group-hover:drop-shadow-[0_8px_18px_rgba(186,90,90,0.5)] group-hover:scale-110 group-hover:-rotate-3 transition-all duration-300"
+            >
+              {/* Speech bubble pointer / tail */}
+              <path
+                d="M 72 72 C 77 77, 82 85, 84 90 C 81 81, 80 76, 79 70 Z"
+                className="fill-[#BA5A5A] stroke-[#BA5A5A]"
+                strokeWidth="1"
+                strokeLinejoin="round"
+              />
+              
+              {/* Main outer circle */}
+              <circle
+                cx="47"
+                cy="47"
+                r="41"
+                className="fill-[#FAF5F5] dark:fill-stone-900 stroke-[#BA5A5A]"
+                strokeWidth="3.5"
+              />
+
+              {/* Clip path for contents inside circle */}
+              <defs>
+                <clipPath id="circle-inner-clip">
+                  <circle cx="47" cy="47" r="39.2" />
+                </clipPath>
+              </defs>
+
+              {/* Clipped group for road */}
+              <g clipPath="url(#circle-inner-clip)">
+                {/* Road background */}
+                <path
+                  d="M -10 88 C 25 71, 55 69, 90 73 L 95 110 L -10 110 Z"
+                  className="fill-[#D8A4A4] dark:fill-[#5C3C3C]"
+                />
+                {/* Road left boundary/curb */}
+                <path
+                  d="M -10 88 C 25 71, 55 69, 90 73"
+                  stroke="#FFFFFF"
+                  strokeWidth="2.5"
+                  fill="none"
+                  opacity="0.5"
+                />
+                {/* Road center dashed line */}
+                <path
+                  d="M -5 96 C 28 80, 56 78, 85 82"
+                  stroke="#FFFFFF"
+                  strokeWidth="2.2"
+                  strokeDasharray="5,5"
+                  fill="none"
+                  opacity="0.8"
+                />
+              </g>
+
+              {/* Traffic light pole */}
+              <rect
+                x="26"
+                y="57"
+                width="2.5"
+                height="17"
+                className="fill-[#737373] dark:fill-[#525252]"
+                rx="0.5"
+              />
+              {/* Traffic light housing */}
+              <rect
+                x="21.5"
+                y="29"
+                width="11.5"
+                height="29"
+                rx="3.5"
+                className="fill-[#525252] dark:fill-[#303030]"
+              />
+              {/* Traffic lights */}
+              <circle cx="27.25" cy="34" r="3.2" className="fill-[#EF4444]" />
+              <circle cx="27.25" cy="43.5" r="3.2" className="fill-[#F59E0B]" />
+              <circle cx="27.25" cy="53" r="3.2" className="fill-[#10B981]" />
+
+              {/* Chat bubble outline */}
+              <path
+                d="M 44 36 H 70 C 73.3 36, 76 38.7, 76 42 V 54 C 76 57.3, 73.3 60, 70 60 H 60.5 L 59 69 L 55.5 60 H 44 C 40.7 60, 38 57.3, 38 54 V 42 C 38 38.7, 40.7 36, 44 36 Z"
+                className="fill-white dark:fill-stone-800 stroke-[#BA5A5A]"
+                strokeWidth="2.6"
+                strokeLinejoin="round"
+              />
+
+              {/* Three dots inside chat bubble */}
+              <circle cx="47.5" cy="48" r="2.2" className="fill-[#BA5A5A]" />
+              <circle cx="57" cy="48" r="2.2" className="fill-[#BA5A5A]" />
+              <circle cx="66.5" cy="48" r="2.2" className="fill-[#BA5A5A]" />
+            </svg>
+          </div>
         )}
       </button>
 
