@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.theme-dark-active, .theme-dark-active *));
 @theme {
   --color-command-bg: var(--command-bg);
   --color-command-panel: var(--command-panel);
