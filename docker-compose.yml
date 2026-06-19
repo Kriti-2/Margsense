@@ -25,6 +25,13 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-}
       FRONTEND_URL: ${FRONTEND_URL:-}
+      TOMTOM_API_KEY: ${TOMTOM_API_KEY:-}
+      WEATHER_API_KEY: ${WEATHER_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      VIOLATIONS_CSV_PATH: ${VIOLATIONS_CSV_PATH:-}
+    volumes:
+      - .:/app/root
+      - ./backend/data:/app/data
     depends_on:
       redis:
         condition: service_healthy
@@ -46,6 +53,13 @@ services:
       REDIS_URL: redis://redis:6379/0
       AUTH_ENABLED: "true"
       DEBUG: "false"
+      TOMTOM_API_KEY: ${TOMTOM_API_KEY:-}
+      WEATHER_API_KEY: ${WEATHER_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      VIOLATIONS_CSV_PATH: ${VIOLATIONS_CSV_PATH:-}
+    volumes:
+      - .:/app/root
+      - ./backend/data:/app/data
     depends_on:
       api:
         condition: service_healthy
