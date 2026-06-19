@@ -25,7 +25,7 @@ export default function DashboardLayout({ children }) {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F5F6F8] dark:bg-gray-950 transition-colors duration-300">
+    <div className="min-h-screen flex flex-col bg-[#F5F6F8] dark:bg-gray-950 transition-colors duration-300">
 
       {/* ── Navbar ── */}
       <header className="sticky top-0 z-50 bg-white/98 dark:bg-gray-950/98 border-b border-gray-100 dark:border-white/10 backdrop-blur-sm">

@@ -13,7 +13,7 @@ export default function ShiftPlanner({ data }) {
     <div className="rounded-xl border border-command-border bg-command-panel p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-white">Shift Planner</h3>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">Shift Planner</h3>
           <p className="text-sm text-command-muted">Officer deployment recommendations</p>
         </div>
         <div className="text-right">
@@ -32,7 +32,7 @@ export default function ShiftPlanner({ data }) {
           <p className="text-xs text-gray-500">High</p>
         </div>
         <div className="rounded-lg bg-command-bg p-3">
-          <p className="text-lg font-bold text-white">
+          <p className="text-lg font-extrabold text-gray-900 dark:text-white">
             ₹{((summary.total_economic_impact_inr || 0) / 100000).toFixed(1)}L
           </p>
           <p className="text-xs text-gray-500">Impact</p>
@@ -46,7 +46,7 @@ export default function ShiftPlanner({ data }) {
             className={`rounded-lg border-l-4 border border-command-border p-4 ${priorityStyles[item.priority]}`}
           >
             <div className="flex items-center justify-between">
-              <span className="font-medium text-white">{item.zone}</span>
+              <span className="font-semibold text-gray-900 dark:text-white">{item.zone}</span>
               <span className="text-xs font-bold uppercase text-gray-400">{item.priority}</span>
             </div>
             <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-400">

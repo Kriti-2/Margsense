@@ -17,7 +17,7 @@ export default function TimeLapse({ trends = [] }) {
 
   return (
     <div className="rounded-xl border border-command-border bg-command-panel p-6 interactive-card shadow-sm">
-      <h3 className="text-lg font-semibold text-white">Violation Time-Lapse</h3>
+      <h3 className="text-lg font-bold text-gray-900 dark:text-white">Violation Time-Lapse</h3>
       <p className="mt-1 text-sm text-command-muted">14-day violation trend animation</p>
       <div className="mt-4 h-48">
         <ResponsiveContainer width="100%" height="100%">

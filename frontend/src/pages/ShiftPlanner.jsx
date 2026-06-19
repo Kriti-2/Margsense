@@ -244,8 +244,8 @@ export default function ShiftPlannerPage() {
       {/* Header and Live Status */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">Interactive Patrol Dispatch Canvas</h2>
-          <p className="mt-1 text-sm text-command-muted">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Interactive Patrol Dispatch Canvas</h2>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
             Drag, toggle, or auto-optimize officer patrols to protect active emergency corridors
           </p>
         </div>
@@ -307,8 +307,8 @@ export default function ShiftPlannerPage() {
           {/* Live Compliance Score Gauge */}
           <div className="rounded-xl border border-command-border bg-command-panel p-6 shadow-sm text-center flex flex-col items-center justify-center space-y-4">
             <div>
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider">Compliance Forecast</h3>
-              <p className="text-[10px] text-command-muted mt-0.5">Live scheduler coverage projection</p>
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">Compliance Forecast</h3>
+              <p className="text-[10px] text-gray-500 mt-0.5">Live scheduler coverage projection</p>
             </div>
             
             {/* SVG Circular Ring Gauge */}
@@ -335,8 +335,8 @@ export default function ShiftPlannerPage() {
                 />
               </svg>
               <div className="absolute text-center">
-                <span className="text-3xl font-extrabold text-gray-800">{complianceScore}%</span>
-                <span className="block text-[8px] text-command-muted uppercase tracking-wider font-bold">Coverage</span>
+                <span className="text-3xl font-extrabold text-gray-900 dark:text-white">{complianceScore}%</span>
+                <span className="block text-[8px] text-gray-500 uppercase tracking-wider font-bold">Coverage</span>
               </div>
             </div>
 
@@ -348,14 +348,14 @@ export default function ShiftPlannerPage() {
           {/* Resource Deployed Staffing Constraints */}
           <div className="rounded-xl border border-command-border bg-command-panel p-5 shadow-sm space-y-4">
             <div>
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider">Active Staff Pool</h3>
-              <p className="text-[10px] text-command-muted mt-0.5">Available officer resources on duty</p>
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">Active Staff Pool</h3>
+              <p className="text-[10px] text-gray-500 mt-0.5">Available officer resources on duty</p>
             </div>
 
             <div className="space-y-2">
               <div className="flex justify-between text-xs font-semibold">
-                <span className="text-gray-800">Deployed Officers:</span>
-                <span className={totalDeployed === poolLimit ? "text-command-warning font-bold" : "text-command-accent"}>
+                <span className="text-gray-900 dark:text-white">Deployed Officers:</span>
+                <span className={totalDeployed === poolLimit ? "text-command-warning font-bold" : "text-[#BA5A5A]"}>
                   {totalDeployed} / {poolLimit} Deployed
                 </span>
               </div>
@@ -394,15 +394,15 @@ export default function ShiftPlannerPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-command-border/40 pb-4">
             
             {/* Shift Select */}
-            <div className="flex gap-1.5 bg-command-bg border border-command-border p-1 rounded-xl w-fit">
+            <div className="flex gap-1.5 bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-white/10 p-1 rounded-xl w-fit">
               {['Morning', 'Evening'].map((shift) => (
                 <button
                   key={shift}
                   onClick={() => setSelectedShift(shift)}
                   className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
                     selectedShift === shift
-                      ? 'bg-command-accent text-white shadow-sm'
-                      : 'text-command-muted hover:text-white'
+                      ? 'bg-[#BA5A5A] text-white shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white dark:hover:bg-white/5'
                   }`}
                 >
                   {shift} Shift
@@ -414,7 +414,7 @@ export default function ShiftPlannerPage() {
             <select
               value={selectedPriority}
               onChange={(e) => setSelectedPriority(e.target.value)}
-              className="bg-command-bg border border-command-border rounded-xl px-3 py-1.5 text-xs text-gray-800 outline-none cursor-pointer focus:border-command-accent"
+              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-1.5 text-xs text-gray-800 dark:text-gray-200 outline-none cursor-pointer focus:border-[#BA5A5A]"
             >
               <option value="All">All Priorities</option>
               <option value="CRITICAL">CRITICAL</option>
@@ -429,9 +429,9 @@ export default function ShiftPlannerPage() {
             <table className="w-full border-collapse">
               <thead>
                 <tr>
-                  <th className="p-3 text-left text-[10px] font-bold text-command-muted uppercase tracking-wider border-b border-command-border">High-Risk Hub</th>
+                  <th className="p-3 text-left text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider border-b border-gray-200 dark:border-white/10">High-Risk Hub</th>
                   {slots.map((slot) => (
-                    <th key={slot} className="p-3 text-center text-[10px] font-bold text-command-muted uppercase tracking-wider border-b border-command-border min-w-[110px]">
+                    <th key={slot} className="p-3 text-center text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider border-b border-gray-200 dark:border-white/10 min-w-[110px]">
                       ⏰ {slot}
                     </th>
                   ))}
@@ -449,7 +449,7 @@ export default function ShiftPlannerPage() {
                     <tr key={z.zone} className="hover:bg-command-bg/30 transition-colors">
                       {/* Zone details & expected weight */}
                       <td className="p-3">
-                        <div className="font-bold text-gray-800 text-sm">{z.zone}</div>
+                        <div className="font-bold text-gray-900 dark:text-white text-sm">{z.zone}</div>
                         <div className="flex items-center gap-1.5 mt-1">
                           <span className={`rounded px-1.5 py-0.5 text-[9px] font-extrabold ${PRIORITY_BADGES[z.priority]}`}>
                             {z.priority}
@@ -464,12 +464,12 @@ export default function ShiftPlannerPage() {
                         const count = allocations[key] || 0;
                         
                         // Select border colors based on deployment level
-                        let cellStyle = 'border-command-border text-command-muted bg-white hover:bg-command-accent/5';
+                        let cellStyle = 'border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-900 hover:bg-[#F9EDED] dark:hover:bg-white/5';
                         if (count > 0) {
                           if (count >= 3) {
                             cellStyle = 'border-command-danger/40 bg-command-danger/10 text-command-danger ring-2 ring-command-danger/15 font-extrabold';
                           } else {
-                            cellStyle = 'border-command-accent/40 bg-command-accent/10 text-command-accent font-extrabold';
+                            cellStyle = 'border-[#BA5A5A]/40 bg-[#F9EDED] dark:bg-[#BA5A5A]/10 text-[#BA5A5A] font-extrabold';
                           }
                         }
 
@@ -486,8 +486,8 @@ export default function ShiftPlannerPage() {
                                 </>
                               ) : (
                                 <>
-                                  <span className="text-gray-300 font-bold">—</span>
-                                  <span className="text-[8px] text-gray-400 uppercase tracking-wider">Unpatrolled</span>
+                                  <span className="text-gray-400 dark:text-gray-600 font-bold">—</span>
+                                  <span className="text-[8px] text-gray-400 dark:text-gray-500 uppercase tracking-wider">Unpatrolled</span>
                                 </>
                               )}
                             </button>
@@ -504,39 +504,39 @@ export default function ShiftPlannerPage() {
       </div>
 
       {/* Deployment Protocol Brief */}
-      <div className="rounded-xl border border-command-border bg-command-panel p-6">
-        <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 border-b border-command-border/40 pb-2">Force Deployment Standard Protocols</h3>
+      <div className="rounded-xl border border-gray-200 dark:border-white/10 bg-command-panel p-6">
+        <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-4 border-b border-gray-200 dark:border-white/10 pb-2">Force Deployment Standard Protocols</h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 text-xs">
-          <div className="rounded-xl bg-command-bg p-4 border border-command-border">
+          <div className="rounded-xl bg-gray-50 dark:bg-gray-900 p-4 border border-gray-200 dark:border-white/10">
             <span className="rounded bg-command-danger/25 px-2 py-0.5 text-command-danger font-bold text-[9px] border border-command-danger/30">
               🚨 3-4 OFFICERS (CRITICAL)
             </span>
-            <p className="mt-2 text-gray-800 font-bold text-sm">Escort & Towing Unit</p>
-            <p className="mt-1 text-xs text-gray-600 leading-relaxed">Assigned to high-density bottlenecks. Officers run continuous rotations, relcoating double-parked vehicles to cleared lots.</p>
+            <p className="mt-2 text-gray-900 dark:text-white font-bold text-sm">Escort & Towing Unit</p>
+            <p className="mt-1 text-xs text-gray-700 dark:text-gray-300 leading-relaxed">Assigned to high-density bottlenecks. Officers run continuous rotations, relcoating double-parked vehicles to cleared lots.</p>
           </div>
 
-          <div className="rounded-xl bg-command-bg p-4 border border-command-border">
+          <div className="rounded-xl bg-gray-50 dark:bg-gray-900 p-4 border border-gray-200 dark:border-white/10">
             <span className="rounded bg-command-warning/25 px-2 py-0.5 text-command-warning font-bold text-[9px] border border-command-warning/30">
               👮 2 OFFICERS (HIGH)
             </span>
-            <p className="mt-2 text-gray-800 font-bold text-sm">Wheel-Clamping Patrol</p>
-            <p className="mt-1 text-xs text-gray-600 leading-relaxed">Rotational clamps deployed for sidewalk obstruction. Spot-challans issued automatically with camera evidence feeds.</p>
+            <p className="mt-2 text-gray-900 dark:text-white font-bold text-sm">Wheel-Clamping Patrol</p>
+            <p className="mt-1 text-xs text-gray-700 dark:text-gray-300 leading-relaxed">Rotational clamps deployed for sidewalk obstruction. Spot-challans issued automatically with camera evidence feeds.</p>
           </div>
 
-          <div className="rounded-xl bg-command-bg p-4 border border-command-border">
-            <span className="rounded bg-command-accent/25 px-2 py-0.5 text-command-accent font-bold text-[9px] border border-command-accent/30">
+          <div className="rounded-xl bg-gray-50 dark:bg-gray-900 p-4 border border-gray-200 dark:border-white/10">
+            <span className="rounded bg-[#F9EDED] dark:bg-[#BA5A5A]/10 px-2 py-0.5 text-[#BA5A5A] font-bold text-[9px] border border-[#BA5A5A]/30">
               👮 1 OFFICER (MEDIUM)
             </span>
-            <p className="mt-2 text-gray-800 font-bold text-sm">Inspection Loop</p>
-            <p className="mt-1 text-xs text-gray-600 leading-relaxed">Routine patrol drive-by every 2 hours to clear lane-splitting or wrong-side parking and keep junctions fluid.</p>
+            <p className="mt-2 text-gray-900 dark:text-white font-bold text-sm">Inspection Loop</p>
+            <p className="mt-1 text-xs text-gray-700 dark:text-gray-300 leading-relaxed">Routine patrol drive-by every 2 hours to clear lane-splitting or wrong-side parking and keep junctions fluid.</p>
           </div>
 
-          <div className="rounded-xl bg-command-bg p-4 border border-command-border">
+          <div className="rounded-xl bg-gray-50 dark:bg-gray-900 p-4 border border-gray-200 dark:border-white/10">
             <span className="rounded bg-gray-500/10 px-2 py-0.5 text-gray-500 font-bold text-[9px] border border-gray-500/20">
               — 0 OFFICERS (LOW)
             </span>
-            <p className="mt-2 text-gray-800 font-bold text-sm">CCTV Telemetry Only</p>
-            <p className="mt-1 text-xs text-gray-600 leading-relaxed">No physical officer footprint on location. The corridor is monitored using computer vision edge nodes.</p>
+            <p className="mt-2 text-gray-900 dark:text-white font-bold text-sm">CCTV Telemetry Only</p>
+            <p className="mt-1 text-xs text-gray-700 dark:text-gray-300 leading-relaxed">No physical officer footprint on location. The corridor is monitored using computer vision edge nodes.</p>
           </div>
         </div>
       </div>

@@ -19,7 +19,7 @@ export default function CorridorStatus({ data }) {
     <div className="rounded-xl border border-command-border bg-command-panel p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-white">Green Corridor Protector</h3>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">Green Corridor Protector</h3>
           <p className="text-sm text-command-muted">Emergency route monitoring</p>
         </div>
         <div className="flex gap-3 text-xs">
@@ -37,7 +37,7 @@ export default function CorridorStatus({ data }) {
           >
             <div className="flex items-start justify-between">
               <div>
-                <p className="font-medium text-white">{corridor.name}</p>
+                <p className="font-bold text-gray-900 dark:text-white">{corridor.name}</p>
                 <p className="mt-1 text-xs text-gray-500">{corridor.zones?.join(' → ')}</p>
               </div>
               <span className={`rounded-full border px-2.5 py-1 text-xs font-bold ${statusStyles[corridor.status]}`}>
@@ -45,8 +45,8 @@ export default function CorridorStatus({ data }) {
               </span>
             </div>
             <div className="mt-3 flex items-center justify-between text-sm">
-              <span className="text-gray-400">
-                Active violations: <strong className="text-white">{corridor.active_violations}</strong>
+              <span className="text-gray-600 dark:text-gray-400 font-medium">
+                Active violations: <strong className="font-bold text-gray-900 dark:text-white">{corridor.active_violations}</strong>
               </span>
               <span className={`font-medium ${priorityStyles[corridor.priority_level]}`}>
                 {corridor.priority_level}

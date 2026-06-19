@@ -134,7 +134,7 @@ export default function ROICard({ shiftData, analytics }) {
             <p className="text-[10px] font-medium uppercase tracking-wider text-command-muted">
               Gross Benefit
             </p>
-            <p className="mt-1 text-sm font-semibold text-white">
+            <p className="mt-1 text-sm font-bold text-gray-900 dark:text-white">
               {formatINR(totalSavings + totalOfficerCost)}
             </p>
           </div>
@@ -167,7 +167,7 @@ export default function ROICard({ shiftData, analytics }) {
               return (
                 <div key={zone.zone} className="group">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-400 transition-colors group-hover:text-white">
+                    <span className="text-gray-600 dark:text-gray-400 transition-colors group-hover:text-gray-900 dark:group-hover:text-white">
                       {zone.zone}
                     </span>
                     <span className="font-medium text-emerald-400">
@@ -188,8 +188,8 @@ export default function ROICard({ shiftData, analytics }) {
 
         {/* Footer insight */}
         <div className="mt-4 rounded-lg border border-command-border bg-command-bg/30 px-3 py-2">
-          <p className="text-xs text-gray-400">
-            <span className="font-medium text-white">💡 Insight:</span>{' '}
+          <p className="text-xs text-gray-600 dark:text-gray-400">
+            <span className="font-bold text-gray-900 dark:text-white">💡 Insight:</span>{' '}
             {roiPercentage >= 200
               ? `Every ₹1 spent on officers saves ₹${(roiPercentage / 100).toFixed(1)} in fuel & productivity losses.`
               : roiPercentage >= 100

@@ -40,19 +40,19 @@ export default function CongestionDebt({ analytics }) {
       <div className="mt-6 grid grid-cols-2 gap-4">
         <div className="rounded-lg bg-command-bg/50 p-3">
           <p className="text-xs text-command-muted">Weekly</p>
-          <p className="text-lg font-semibold text-white">{formatINR(weeklyLoss)}</p>
+          <p className="text-lg font-bold text-gray-900 dark:text-white">{formatINR(weeklyLoss)}</p>
         </div>
         <div className="rounded-lg bg-command-bg/50 p-3">
           <p className="text-xs text-command-muted">Monthly</p>
-          <p className="text-lg font-semibold text-white">{formatINR(monthlyLoss)}</p>
+          <p className="text-lg font-bold text-gray-900 dark:text-white">{formatINR(monthlyLoss)}</p>
         </div>
       </div>
       {analytics?.economic_losses && (
         <div className="mt-4 space-y-2">
           {analytics.economic_losses.slice(0, 4).map((zone) => (
             <div key={zone.zone} className="flex items-center justify-between text-sm">
-              <span className="text-gray-400">{zone.zone}</span>
-              <span className="font-medium text-white">{formatINR(zone.daily_loss)}</span>
+              <span className="text-gray-600 dark:text-gray-400">{zone.zone}</span>
+              <span className="font-semibold text-gray-900 dark:text-white">{formatINR(zone.daily_loss)}</span>
             </div>
           ))}
         </div>

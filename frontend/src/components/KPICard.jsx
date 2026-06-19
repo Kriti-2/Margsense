@@ -64,7 +64,7 @@ export default function KPICard({ title, value, subtitle, trend, sparklineData, 
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1.5 flex-1 min-w-0">
           <p className="text-[10px] font-bold uppercase tracking-wider text-command-muted leading-none">{title}</p>
-          <p className="text-2xl font-extrabold text-white leading-none pt-1">{value}</p>
+          <p className="text-2xl font-extrabold text-gray-900 dark:text-white leading-none pt-1">{value}</p>
         </div>
         {sparklineData && sparklineData.length > 1 && (
           <Sparkline data={sparklineData} color={accentColors[variant]} />

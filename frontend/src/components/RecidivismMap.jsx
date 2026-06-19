@@ -10,7 +10,7 @@ export default function RecidivismMap({ data }) {
     <div className="rounded-xl border border-command-border bg-command-panel p-6 interactive-card shadow-sm">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-white">Recidivism Heatmap</h3>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">Recidivism Heatmap</h3>
           <p className="text-sm text-command-muted">
             {data?.stubborn_zone_count || 0} stubborn zones (&gt;60% recurrence)
           </p>
@@ -74,7 +74,7 @@ export default function RecidivismMap({ data }) {
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="font-medium text-white">{zone.zone}</span>
+              <span className="font-semibold text-gray-900 dark:text-white">{zone.zone}</span>
               <span className="text-xs text-gray-400">{(zone.recurrence_rate * 100).toFixed(1)}%</span>
             </div>
             <p className="mt-1 text-xs text-gray-500">{zone.recommendation}</p>

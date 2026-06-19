@@ -11,7 +11,7 @@ export default function SeverityQueue({ data }) {
   return (
     <div className="rounded-xl border border-command-border bg-command-panel p-6 interactive-card shadow-sm">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-white">Severity Queue</h3>
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Severity Queue</h3>
         <div className="flex gap-2 text-xs">
           {Object.entries(summary).map(([level, count]) => (
             <span key={level} className={`rounded-full px-2 py-0.5 font-medium ${severityStyles[level]}`}>
@@ -28,7 +28,7 @@ export default function SeverityQueue({ data }) {
             className="flex items-center justify-between rounded-lg border border-command-border bg-command-bg px-4 py-3"
           >
             <div>
-              <p className="text-sm font-medium text-white">{item.zone}</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.zone}</p>
               <p className="text-xs text-gray-500">
                 {item.vehicle_type} · Score {item.severity_score}
               </p>

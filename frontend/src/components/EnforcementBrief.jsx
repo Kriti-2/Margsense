@@ -11,14 +11,14 @@ export default function EnforcementBrief({ shiftData, predictions, corridors }) 
 
   return (
     <div className="rounded-xl border border-command-border bg-command-panel p-6 interactive-card shadow-sm">
-      <h3 className="text-lg font-semibold text-white">Enforcement Brief</h3>
+      <h3 className="text-lg font-bold text-gray-900 dark:text-white">Enforcement Brief</h3>
       <p className="mt-1 text-sm text-command-muted">Priority actions for next 24 hours</p>
 
       <div className="mt-4 space-y-3">
         {topPredictions.map((pred) => (
           <div key={pred.zone} className="rounded-lg border border-command-border bg-command-bg p-3">
             <div className="flex items-center justify-between">
-              <span className="font-medium text-white">{pred.zone}</span>
+              <span className="font-semibold text-gray-950 dark:text-white">{pred.zone}</span>
               <span className={`rounded-full border px-2 py-0.5 text-xs font-bold ${severityStyles.CRITICAL}`}>
                 Risk {pred.risk_score}
               </span>
@@ -48,8 +48,8 @@ export default function EnforcementBrief({ shiftData, predictions, corridors }) 
           <div className="mt-2 space-y-2">
             {assignments.map((a) => (
               <div key={a.zone} className="flex items-center justify-between text-sm">
-                <span className="text-gray-300">{a.zone}</span>
-                <span className="font-medium text-white">
+                <span className="text-gray-600 dark:text-gray-400">{a.zone}</span>
+                <span className="font-semibold text-gray-950 dark:text-white">
                   {a.officers_recommended} officers · {a.shift}
                 </span>
               </div>
