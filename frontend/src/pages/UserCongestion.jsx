@@ -122,26 +122,26 @@ export default function UserCongestion() {
   const [calculatedRoutes, setCalculatedRoutes] = useState(null);
   const [routeDetails, setRouteDetails] = useState(null);
 
-  const handleLiveTick = (payload) => {
-    if (payload.type === 'live_tick' && payload.zone_intensity) {
-      loadPreview();
-    }
-  };
-
-  useLiveFeed(handleLiveTick);
-
-  function loadPreview() {
+  const loadPreview = useCallback(() => {
     api.getCongestionPreview().then((res) => {
       setData(res.data);
       setLoading(false);
     }).catch(() => setLoading(false));
-  }
+  }, []);
+
+  const handleLiveTick = useCallback((payload) => {
+    if (payload.type === 'live_tick' && payload.zone_intensity) {
+      loadPreview();
+    }
+  }, [loadPreview]);
+
+  useLiveFeed(handleLiveTick);
 
   useEffect(() => {
     loadPreview();
     const interval = setInterval(loadPreview, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [loadPreview]);
 
   const handleCalculateRoute = () => {
     const originLoc = LOCATIONS.find(l => l.name === origin);

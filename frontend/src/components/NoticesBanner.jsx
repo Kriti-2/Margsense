@@ -157,8 +157,6 @@ export default function NoticesBanner() {
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Progress bar for auto-cycle timer
-  const [progress, setProgress] = useState(0);
-  const progressRef = useRef(null);
   const cycleTimerRef = useRef(null);
 
   const navigate = useNavigate();
@@ -237,37 +235,18 @@ export default function NoticesBanner() {
     return currentIndex >= activeNotices.length ? 0 : currentIndex;
   }, [currentIndex, activeNotices.length]);
 
-  // ── Auto-cycle with progress bar ──
+  // ── Auto-cycle with timer ──
   useEffect(() => {
     if (activeNotices.length <= 1 || isPaused || selectedNotice || isListViewOpen || isExpanded || isSpeaking) {
-      // Freeze progress
-      if (progressRef.current) cancelAnimationFrame(progressRef.current);
       if (cycleTimerRef.current) clearTimeout(cycleTimerRef.current);
       return;
     }
-
-    const startProgressId = setTimeout(() => {
-      setProgress(0);
-    }, 0);
-    let start = performance.now();
-
-    const animate = (now) => {
-      const elapsed = now - start;
-      const pct = Math.min((elapsed / CYCLE_DURATION) * 100, 100);
-      setProgress(pct);
-      if (pct < 100) {
-        progressRef.current = requestAnimationFrame(animate);
-      }
-    };
-    progressRef.current = requestAnimationFrame(animate);
 
     cycleTimerRef.current = setTimeout(() => {
       setCurrentIndex((prev) => (prev + 1) % activeNotices.length);
     }, CYCLE_DURATION);
 
     return () => {
-      clearTimeout(startProgressId);
-      if (progressRef.current) cancelAnimationFrame(progressRef.current);
       if (cycleTimerRef.current) clearTimeout(cycleTimerRef.current);
     };
   }, [activeNotices.length, isPaused, selectedNotice, isListViewOpen, isExpanded, currentIndex, isSpeaking]);
@@ -424,6 +403,10 @@ export default function NoticesBanner() {
           0% { opacity:0; max-height:0; }
           100% { opacity:1; max-height:200px; }
         }
+        @keyframes progress-run {
+          from { width: 0%; }
+          to { width: 100%; }
+        }
       `}</style>
 
       {/* ═══════ MAIN BANNER ═══════ */}
@@ -453,9 +436,19 @@ export default function NoticesBanner() {
         </>}
 
         {/* Auto-cycle progress bar at the very bottom */}
-        {activeNotices.length > 1 && !isPaused && !isExpanded && (
+        {activeNotices.length > 1 && !isExpanded && (
           <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-white/5 z-30">
-            <div className={`h-full ${th.progressBar} opacity-70 transition-none`} style={{ width: `${progress}%` }} />
+            <div 
+              key={safeCurrentIndex}
+              className={`h-full ${th.progressBar} opacity-70`}
+              style={{
+                animationName: 'progress-run',
+                animationDuration: `${CYCLE_DURATION}ms`,
+                animationTimingFunction: 'linear',
+                animationPlayState: isPaused ? 'paused' : 'running',
+                animationFillMode: 'both'
+              }}
+            />
           </div>
         )}
 

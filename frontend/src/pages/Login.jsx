@@ -9,12 +9,7 @@ export default function Login() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   
-  // Theme state: check local storage or system preference
-  const [isDark, setIsDark] = useState(() => {
-    const storedTheme = localStorage.getItem('parksense_theme');
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    return storedTheme === 'dark' || (!storedTheme && systemPrefersDark);
-  });
+
 
   const [mode, setMode] = useState('user'); // Toggle: 'user' (Citizen) vs 'officer' (Officer Command)
   const [email, setEmail] = useState('');
@@ -32,16 +27,11 @@ export default function Login() {
     }
   }, [searchParams]);
 
-  // Sync tailwind html tag with theme state
+  // Force Light Mode
   useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('parksense_theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('parksense_theme', 'light');
-    }
-  }, [isDark]);
+    document.documentElement.classList.remove('dark');
+    localStorage.setItem('parksense_theme', 'light');
+  }, []);
 
   // Login submission
   async function handleSubmit(e) {
@@ -82,7 +72,7 @@ export default function Login() {
         loop
         muted
         playsInline
-        className="hidden sm:block fixed inset-0 z-0 h-full w-full object-cover transform-gpu will-change-[filter] transition-all duration-500 brightness-[0.45] contrast-[1.05] dark:brightness-[0.3] dark:contrast-[1.1]"
+        className="hidden sm:block fixed inset-0 z-0 h-full w-full object-cover transform-gpu will-change-[filter] transition-all duration-500 brightness-[0.45] contrast-[1.05]"
       >
         <source src="/traffic_video/12926930_3840_2160_60fps.mp4" type="video/mp4" />
       </video>
@@ -93,33 +83,10 @@ export default function Login() {
         loop
         muted
         playsInline
-        className="block sm:hidden fixed inset-0 z-0 h-full w-full object-cover transform-gpu will-change-[filter] transition-all duration-500 brightness-[0.52] contrast-[1.05] dark:brightness-[0.38] dark:contrast-[1.1]"
+        className="block sm:hidden fixed inset-0 z-0 h-full w-full object-cover transform-gpu will-change-[filter] transition-all duration-500 brightness-[0.52] contrast-[1.05]"
       >
         <source src="/traffic_video/12926930_3840_2160_60fps.mp4" type="video/mp4" />
       </video>
-
-      {/* Floating Theme Toggle Switch at Top Right */}
-      <div className="fixed top-5 right-5 z-20 pointer-events-auto">
-        <button
-          type="button"
-          onClick={() => setIsDark(!isDark)}
-          className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/15 bg-white/5 text-white shadow-[0_4px_25px_rgba(0,0,0,0.3)] backdrop-blur-md transition-all duration-200 cursor-pointer hover:scale-105 hover:border-white/30 active:scale-95"
-          title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
-          aria-label="Toggle Theme"
-        >
-          {isDark ? (
-            // Sun icon
-            <svg className="h-5.5 w-5.5 text-amber-500" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.02 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.02-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.01c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z" />
-            </svg>
-          ) : (
-            // Moon icon
-            <svg className="h-5.5 w-5.5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-            </svg>
-          )}
-        </button>
-      </div>
 
       {/* Centered High-Fidelity Login Card (GPU accelerated to avoid lag over 4K video) */}
       <div className="z-10 flex items-center justify-center px-4 w-full pointer-events-none">

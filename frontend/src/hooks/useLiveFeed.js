@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 
 const playedIds = new Set();
 
@@ -67,12 +67,11 @@ export function useLiveFeed(onTick) {
   const [connected, setConnected] = useState(false);
   const [status, setStatus] = useState(null);
 
-  const stableOnTick = useCallback(
-    (payload) => {
-      if (onTick) onTick(payload);
-    },
-    [onTick]
-  );
+  // Store onTick in a mutable ref so the WebSocket connection does not close/re-open when onTick changes
+  const onTickRef = useRef(onTick);
+  useEffect(() => {
+    onTickRef.current = onTick;
+  }, [onTick]);
 
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -99,7 +98,9 @@ export function useLiveFeed(onTick) {
             });
           }
           
-          stableOnTick(payload);
+          if (onTickRef.current) {
+            onTickRef.current(payload);
+          }
         }
       } catch {
         /* ignore malformed messages */
@@ -107,7 +108,7 @@ export function useLiveFeed(onTick) {
     };
 
     return () => ws.close();
-  }, [stableOnTick]);
+  }, []); // Empty dependency array ensures connection is opened exactly once on mount
 
   return { connected, status };
 }

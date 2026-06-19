@@ -3,7 +3,6 @@ import { useAuth } from '../context/AuthContext';
 import { useLiveFeed } from '../hooks/useLiveFeed';
 import { useState, useCallback } from 'react';
 import NoticesBanner from '../components/NoticesBanner';
-import ThemeToggle from '../components/ThemeToggle';
 import ChatBot from '../components/ChatBot';
 
 const USER_NAV = [
@@ -84,8 +83,6 @@ export default function UserLayout({ children }) {
               Live Feed
             </span>
             <div className="h-4 w-px bg-gray-200 dark:bg-white/10" />
-            <ThemeToggle />
-            <div className="h-4 w-px bg-gray-200 dark:bg-white/10" />
 
             {/* Profile */}
             <div className="relative">
@@ -158,8 +155,7 @@ export default function UserLayout({ children }) {
                 {link.label}
               </NavLink>
             ))}
-            <div className="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center justify-between">
-              <ThemeToggle />
+            <div className="pt-2 border-t border-gray-100 dark:border-white/10 flex justify-end">
               <button
                 type="button"
                 onClick={handleLogout}

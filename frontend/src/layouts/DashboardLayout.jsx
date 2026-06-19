@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import ThemeToggle from '../components/ThemeToggle';
 import ChatBot from '../components/ChatBot';
 
 export default function DashboardLayout({ children }) {
@@ -79,10 +78,6 @@ export default function DashboardLayout({ children }) {
 
             <div className="h-4 w-px bg-gray-200 dark:bg-white/10" />
 
-            <ThemeToggle />
-
-            <div className="h-4 w-px bg-gray-200 dark:bg-white/10" />
-
             {/* Profile */}
             <div className="relative">
               <button
@@ -154,8 +149,7 @@ export default function DashboardLayout({ children }) {
                 {link.label}
               </NavLink>
             ))}
-            <div className="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center justify-between">
-              <ThemeToggle />
+            <div className="pt-2 border-t border-gray-100 dark:border-white/10 flex justify-end">
               <button
                 type="button"
                 onClick={handleLogout}
