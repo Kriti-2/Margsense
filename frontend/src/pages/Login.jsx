@@ -63,29 +63,36 @@ export default function Login() {
   }
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center py-6 transition-colors duration-300 bg-slate-950">
+    <div className="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center py-6 transition-colors duration-300 bg-neutral-950">
       
-      {/* 4K 60fps Loop Video Background (Autoplay, Loop, Muted, GPU-accelerated) */}
+      {/* Desktop Video Background (4K Loop, Hidden on Mobile) */}
       <video
         autoPlay
         loop
         muted
         playsInline
-        className="fixed inset-0 z-0 h-full w-full object-cover transform-gpu will-change-[filter] transition-all duration-500 brightness-[0.35] contrast-[1.05] dark:brightness-[0.2] dark:contrast-[1.1]"
+        className="hidden sm:block fixed inset-0 z-0 h-full w-full object-cover transform-gpu will-change-[filter] transition-all duration-500 brightness-[0.45] contrast-[1.05] dark:brightness-[0.3] dark:contrast-[1.1]"
       >
         <source src="/traffic_video/12926930_3840_2160_60fps.mp4" type="video/mp4" />
-        <source src="https://assets.mixkit.co/videos/preview/mixkit-city-traffic-at-night-vertical-shot-34469-large.mp4" type="video/mp4" />
       </video>
 
-      {/* Grid overlay overlay for high-tech aesthetic */}
-      <div className="fixed inset-0 z-0 bg-[linear-gradient(rgba(18,24,38,0.25)_1px,transparent_1px),linear-gradient(90deg,rgba(18,24,38,0.25)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none opacity-40" />
+      {/* Mobile Video Background (Brighter, Hidden on Desktop) */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="block sm:hidden fixed inset-0 z-0 h-full w-full object-cover transform-gpu will-change-[filter] transition-all duration-500 brightness-[0.52] contrast-[1.05] dark:brightness-[0.38] dark:contrast-[1.1]"
+      >
+        <source src="/traffic_video/12926930_3840_2160_60fps.mp4" type="video/mp4" />
+      </video>
 
       {/* Floating Theme Toggle Switch at Top Right */}
       <div className="fixed top-5 right-5 z-20 pointer-events-auto">
         <button
           type="button"
           onClick={() => setIsDark(!isDark)}
-          className="flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-700/40 dark:border-teal-500/20 bg-white/10 dark:bg-[#060913]/70 text-slate-200 dark:text-teal-400 shadow-[0_4px_25px_rgba(0,0,0,0.3)] backdrop-blur-md transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95"
+          className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/15 bg-white/5 text-white shadow-[0_4px_25px_rgba(0,0,0,0.3)] backdrop-blur-md transition-all duration-200 cursor-pointer hover:scale-105 hover:border-white/30 active:scale-95"
           title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
           aria-label="Toggle Theme"
         >
@@ -105,180 +112,186 @@ export default function Login() {
 
       {/* Centered High-Fidelity Login Card (GPU accelerated to avoid lag over 4K video) */}
       <div className="z-10 flex items-center justify-center px-4 w-full pointer-events-none">
-        <div className="w-full max-w-[360px] rounded-3xl border border-white/15 dark:border-teal-500/30 bg-slate-900/40 dark:bg-black/40 px-6 py-6.5 text-white shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)] backdrop-blur-2xl transition-all duration-300 transform-gpu will-change-transform pointer-events-auto hover:border-white/20 dark:hover:border-teal-500/50">
+        <div className="relative w-full max-w-[360px] rounded-3xl border border-white/20 bg-white/[0.08] px-6 py-6.5 text-white shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7),inset_0_1px_0_0_rgba(255,255,255,0.35),inset_0_0_0_1px_rgba(255,255,255,0.08)] backdrop-blur-3xl backdrop-saturate-200 transition-all duration-300 transform-gpu will-change-transform pointer-events-auto hover:bg-white/[0.12] hover:border-white/25 hover:shadow-[0_60px_120px_-25px_rgba(0,0,0,0.85),inset_0_1px_0_0_rgba(255,255,255,0.55),inset_0_0_0_1px_rgba(255,255,255,0.12)] hover:scale-[1.01] overflow-hidden">
           
-          {/* Logo, Header, and Pulsing Live Badge */}
-          <div className="mb-4 flex flex-col items-center text-center">
-            <div className="flex items-center justify-center gap-2 mb-1">
-              {/* Green Rounded Map-Pin Icon */}
-              <div className="flex h-8.5 w-8.5 items-center justify-center rounded-xl bg-[#1D9E75] shadow-lg shadow-[#1D9E75]/30">
-                <svg className="h-4.5 w-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </div>
-              <h1 className="text-xl font-black tracking-tight text-white select-none">ParkSense AI</h1>
-            </div>
+          {/* Ambient Glass Sheen Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.08] to-transparent pointer-events-none z-0" />
+          
+          <div className="relative z-10 w-full flex flex-col">
             
-            {/* Live Badge */}
-            <div className="flex items-center gap-1.5 rounded-full bg-teal-950/45 px-2.5 py-0.5 border border-teal-500/20">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-500 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-teal-500"></span>
-              </span>
-              <span className="text-[9px] font-bold uppercase tracking-wider text-teal-400 select-none">Bengaluru · Live</span>
-            </div>
-          </div>
-
-          {/* Mode Selector Segmented Toggle */}
-          <div className="mb-3.5 flex rounded-2xl bg-white/[0.03] dark:bg-black/[0.1] p-1 border border-white/5">
-            <button
-              type="button"
-              onClick={() => setMode('user')}
-              className={`flex-1 rounded-xl py-2 text-xs font-black uppercase tracking-wider transition-all duration-300 cursor-pointer ${
-                mode === 'user' 
-                  ? 'border border-[rgba(29,158,117,0.4)] text-[#1D9E75] bg-[rgba(29,158,117,0.15)] shadow-sm' 
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              Citizen
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode('officer')}
-              className={`flex-1 rounded-xl py-2 text-xs font-black uppercase tracking-wider transition-all duration-300 cursor-pointer ${
-                mode === 'officer' 
-                  ? 'border border-[rgba(29,158,117,0.4)] text-[#1D9E75] bg-[rgba(29,158,117,0.15)] shadow-sm' 
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              Officer
-            </button>
-          </div>
-
-          {/* Subtext description */}
-          <p className="mb-3.5 text-center text-xs text-gray-300 dark:text-gray-400 font-semibold select-none leading-relaxed px-1">
-            {mode === 'user' 
-              ? 'Plan your commute — see congestion and parking hotspots before you travel.'
-              : 'Command center access for Bengaluru traffic enforcement.'}
-          </p>
-
-          {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 select-none">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="mt-1 w-full rounded-xl border border-white/10 dark:border-slate-800/80 bg-white/[0.02] dark:bg-black/[0.15] px-4 py-2.5 text-sm text-white outline-none focus:border-[#1D9E75] focus:ring-2 focus:ring-[#1D9E75]/20 transition-all duration-300 placeholder-gray-600"
-                placeholder={mode === 'officer' ? 'officer@parksense.demo' : 'you@email.com'}
-              />
-            </div>
-            
-            <div>
-              <div className="flex justify-between items-center">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 select-none">Password</label>
-                <button 
-                  type="button" 
-                  className="text-[9px] font-bold text-gray-400 hover:text-teal-400 hover:underline cursor-pointer bg-transparent border-none"
-                >
-                  Forgot password?
-                </button>
+            {/* Logo, Header, and Pulsing Live Badge */}
+            <div className="mb-4 flex flex-col items-center text-center">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                {/* Neutral Glass Map-Pin Icon */}
+                <div className="flex h-8.5 w-8.5 items-center justify-center rounded-xl bg-white/10 border border-white/20 shadow-lg">
+                  <svg className="h-4.5 w-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <h1 className="text-xl font-black tracking-tight text-white select-none">ParkSense AI</h1>
               </div>
-              <div className="relative mt-1">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full rounded-xl border border-white/10 dark:border-slate-800/80 bg-white/[0.02] dark:bg-black/[0.15] px-4 py-2.5 pr-11 text-sm text-white outline-none focus:border-[#1D9E75] focus:ring-2 focus:ring-[#1D9E75]/20 transition-all duration-300"
-                />
-                {/* Visibility eye toggle */}
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3.5 cursor-pointer"
-                >
-                  {showPassword ? (
-                    <svg className="h-4.5 w-4.5 text-gray-500 hover:text-teal-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
-                    </svg>
-                  ) : (
-                    <svg className="h-4.5 w-4.5 text-gray-500 hover:text-teal-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  )}
-                </button>
+              
+              {/* Live Badge */}
+              <div className="flex items-center gap-1.5 rounded-full bg-white/5 px-2.5 py-0.5 border border-white/10">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
+                </span>
+                <span className="text-[9px] font-bold uppercase tracking-wider text-white/80 select-none">Bengaluru · Live</span>
               </div>
             </div>
 
-            {error && <p className="text-[11px] font-bold text-command-danger">{error}</p>}
-            
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-xl bg-[#1D9E75] py-2.5 font-bold uppercase text-[11px] tracking-widest text-white hover:opacity-95 active:scale-[0.99] transition-all duration-200 disabled:opacity-50 cursor-pointer shadow-lg shadow-[#1D9E75]/25 mt-2"
-            >
-              {loading 
-                ? 'Signing in...' 
-                : mode === 'officer' 
-                  ? 'Sign In as Officer' 
-                  : 'Sign In as Citizen'}
-            </button>
-          </form>
+            {/* Mode Selector Segmented Toggle */}
+            <div className="mb-3.5 flex rounded-2xl bg-white/[0.04] p-1 border border-white/10">
+              <button
+                type="button"
+                onClick={() => setMode('user')}
+                className={`flex-1 rounded-xl py-2 text-xs font-black uppercase tracking-wider transition-all duration-300 cursor-pointer ${
+                  mode === 'user' 
+                    ? 'border border-white/25 text-white bg-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] backdrop-blur-sm' 
+                    : 'text-white/60 hover:text-white'
+                }`}
+              >
+                Citizen
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('officer')}
+                className={`flex-1 rounded-xl py-2 text-xs font-black uppercase tracking-wider transition-all duration-300 cursor-pointer ${
+                  mode === 'officer' 
+                    ? 'border border-white/25 text-white bg-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] backdrop-blur-sm' 
+                    : 'text-white/60 hover:text-white'
+                }`}
+              >
+                Officer
+              </button>
+            </div>
 
-          {/* Google Citizen Login */}
-          {mode === 'user' && (
-            <a
-              href={getGoogleOAuthUrl()}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 dark:border-slate-800/80 py-2.5 text-xs font-bold text-white bg-white/[0.03] hover:bg-white/10 transition-all cursor-pointer"
-            >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
-              </svg>
-              <span>Sign in with Google</span>
-              <span className="text-[10px] text-gray-500 font-normal">(Citizen OAuth)</span>
-            </a>
-          )}
-
-          {/* Demo Credentials Filler */}
-          <button
-            type="button"
-            onClick={fillDemo}
-            className="mt-3 w-full text-center text-xs text-[#1D9E75] hover:underline cursor-pointer bg-transparent border-none outline-none select-none font-bold"
-          >
-            Use demo {mode} credentials
-          </button>
-
-          {/* Citizen register link */}
-          {mode === 'user' && (
-            <p className="mt-3 text-center text-xs text-gray-400 select-none">
-              New here?{' '}
-              <Link to="/register" className="text-[#1D9E75] hover:underline font-bold">
-                Create account
-              </Link>
+            {/* Subtext description */}
+            <p className="mb-3.5 text-center text-xs text-white/70 font-semibold select-none leading-relaxed px-1">
+              {mode === 'user' 
+                ? 'Plan your commute — see congestion and parking hotspots before you travel.'
+                : 'Command center access for Bengaluru traffic enforcement.'}
             </p>
-          )}
 
+            {/* Login Form */}
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-white/50 select-none">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white outline-none focus:border-white/40 focus:ring-2 focus:ring-white/10 transition-all duration-300 placeholder-white/30"
+                  placeholder={mode === 'officer' ? 'officer@parksense.demo' : 'you@email.com'}
+                />
+              </div>
+              
+              <div>
+                <div className="flex justify-between items-center">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-white/50 select-none">Password</label>
+                  <button 
+                    type="button" 
+                    className="text-[9px] font-bold text-white/50 hover:text-white hover:underline cursor-pointer bg-transparent border-none"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+                <div className="relative mt-1">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 pr-11 text-sm text-white outline-none focus:border-white/40 focus:ring-2 focus:ring-white/10 transition-all duration-300"
+                  />
+                  {/* Visibility eye toggle */}
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 flex items-center pr-3.5 cursor-pointer"
+                  >
+                    {showPassword ? (
+                      <svg className="h-4.5 w-4.5 text-white/45 hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                      </svg>
+                    ) : (
+                      <svg className="h-4.5 w-4.5 text-white/45 hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {error && <p className="text-[11px] font-bold text-command-danger">{error}</p>}
+              
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-xl bg-white py-2.5 font-bold uppercase text-[11px] tracking-widest text-black hover:bg-white/90 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 cursor-pointer shadow-[0_8px_24px_rgba(255,255,255,0.15)] mt-2"
+              >
+                {loading 
+                  ? 'Signing in...' 
+                  : mode === 'officer' 
+                    ? 'Sign In as Officer' 
+                    : 'Sign In as Citizen'}
+              </button>
+            </form>
+
+            {/* Google Citizen Login */}
+            {mode === 'user' && (
+              <a
+                href={getGoogleOAuthUrl()}
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 py-2.5 text-xs font-bold text-white bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+                </svg>
+                <span>Sign in with Google</span>
+                <span className="text-[10px] text-white/40 font-normal">(Citizen OAuth)</span>
+              </a>
+            )}
+
+            {/* Demo Credentials Filler */}
+            <button
+              type="button"
+              onClick={fillDemo}
+              className="mt-3 w-full text-center text-xs text-white/60 hover:text-white hover:underline cursor-pointer bg-transparent border-none outline-none select-none font-bold transition-colors duration-200"
+            >
+              Use demo {mode} credentials
+            </button>
+
+            {/* Citizen register link */}
+            {mode === 'user' && (
+              <p className="mt-3 text-center text-xs text-white/55 select-none">
+                New here?{' '}
+                <Link to="/register" className="text-white hover:underline font-bold transition-colors duration-200">
+                  Create account
+                </Link>
+              </p>
+            )}
+
+          </div>
         </div>
       </div>
 
       {/* Floating Glass Status/Stats Bar at Bottom */}
       <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-10 w-full max-w-[420px] px-4 select-none pointer-events-auto">
-        <div className="flex items-center justify-around rounded-2xl border border-white/10 dark:border-teal-500/20 bg-slate-900/60 dark:bg-black/60 px-4 py-2.5 text-white shadow-[0_10px_30px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.1)] backdrop-blur-xl">
+        <div className="flex items-center justify-around rounded-2xl border border-white/15 bg-white/5 px-4 py-2.5 text-white shadow-[0_15px_35px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.15)] backdrop-blur-xl">
           <div className="flex items-center gap-1.5">
             <span className="relative flex h-1.5 w-1.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span>
             </span>
-            <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Violations</span>
+            <span className="text-[9px] text-white/60 font-bold uppercase tracking-wider">Violations</span>
             <span className="text-xs text-red-400 font-black">791+</span>
           </div>
           <div className="h-4 w-px bg-white/10"></div>
@@ -287,7 +300,7 @@ export default function Login() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
             </span>
-            <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Active Zones</span>
+            <span className="text-[9px] text-white/60 font-bold uppercase tracking-wider">Active Zones</span>
             <span className="text-xs text-green-400 font-black">6</span>
           </div>
           <div className="h-4 w-px bg-white/10"></div>
@@ -296,13 +309,10 @@ export default function Login() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-500 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-teal-500"></span>
             </span>
-            <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Forecast</span>
+            <span className="text-[9px] text-white/60 font-bold uppercase tracking-wider">Forecast</span>
             <span className="text-xs text-teal-400 font-black">24h</span>
           </div>
         </div>
-        <p className="mt-1.5 text-center text-[9px] text-gray-500 font-bold uppercase tracking-widest">
-          BBMP Authorized Node
-        </p>
       </div>
 
     </div>
