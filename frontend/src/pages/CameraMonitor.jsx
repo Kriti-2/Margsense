@@ -61,22 +61,6 @@ function generateLicensePlate() {
   return `${rState}-${rDistrict}-${rLetter1}${rLetter2}-${rNumber}`;
 }
 
-// Helper to load external scripts dynamically
-const loadScript = (src) => {
-  return new Promise((resolve, reject) => {
-    if (document.querySelector(`script[src="${src}"]`)) {
-      resolve();
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = src;
-    script.async = true;
-    script.onload = () => resolve();
-    script.onerror = (e) => reject(e);
-    document.head.appendChild(script);
-  });
-};
-
 export default function CameraMonitor() {
   const [logs, setLogs] = useState([]);
   const [autoIngest, setAutoIngest] = useState(true);
@@ -98,24 +82,6 @@ export default function CameraMonitor() {
     return plate;
   };
 
-  const playAlertSound = () => {
-    return; // Disabled by user request
-    try {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
-      oscillator.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
-      oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
-      gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-      oscillator.start();
-      oscillator.stop(audioCtx.currentTime + 0.15);
-    } catch (err) {
-      console.error("Audio Context failed to play sound", err);
-    }
-  };
-
   // References to the HTML5 video tags
   const videoRefs = useRef({});
   const sharedCanvasRef = useRef(null);
@@ -126,7 +92,6 @@ export default function CameraMonitor() {
   const [realDetections, setRealDetections] = useState({});
 
   // Fallback math-emulator states
-  const [tick, setTick] = useState(0);
   const [fallbackVehicles, setFallbackVehicles] = useState({
     'CAM-01': [
       { id: 'v1', lane: 'left', progress: 0, type: 'CAR', confidence: 94 },
@@ -392,7 +357,6 @@ export default function CameraMonitor() {
   // Run progress loop for fallback emulation
   useEffect(() => {
     const animInterval = setInterval(() => {
-      setTick((t) => t + 1);
       setFallbackVehicles((prev) => {
         const next = {};
         Object.keys(prev).forEach((camId) => {
@@ -402,7 +366,7 @@ export default function CameraMonitor() {
 
             if (v.isParked) return { ...v, confidence: newConf };
 
-            let newProgress = v.progress + 1.5;
+            let newProgress = v.progress + 3.75;
             let newType = v.type;
             if (newProgress >= 100) {
               newProgress = 0;
@@ -414,7 +378,7 @@ export default function CameraMonitor() {
         });
         return next;
       });
-    }, 100);
+    }, 250);
 
     return () => clearInterval(animInterval);
   }, []);
@@ -905,7 +869,6 @@ export default function CameraMonitor() {
               
               <button
                 onClick={() => {
-                  playAlertSound();
                   setTowedVehicles(prev => {
                     const next = new Set(prev);
                     next.add(selectedVehicle.id);

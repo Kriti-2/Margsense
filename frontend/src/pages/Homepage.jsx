@@ -1,12 +1,13 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useLiveFeed } from '../hooks/useLiveFeed';
 import { useAuth } from '../context/AuthContext';
 import KPICard from '../components/KPICard';
-import HeatMap from '../components/HeatMap';
-import WeatherBanner from '../components/WeatherBanner';
 import { useTranslation } from '../context/LanguageContext';
+
+const HeatMap = lazy(() => import('../components/HeatMap'));
+const WeatherBanner = lazy(() => import('../components/WeatherBanner'));
 
 const SLIDES = [
   '/ChatGPT Image Jun 19, 2026, 08_53_06 PM.png',
@@ -353,7 +354,13 @@ export default function Homepage() {
           </div>
         </div>
 
-        <WeatherBanner weatherData={predictions?.weather_escalation} liveWeather={lastTick?.weather} />
+        <Suspense fallback={
+          <div className="h-20 animate-pulse bg-command-panel border border-command-border rounded-xl flex items-center justify-center text-xs text-command-muted">
+            Loading weather forecast...
+          </div>
+        }>
+          <WeatherBanner weatherData={predictions?.weather_escalation} liveWeather={lastTick?.weather} />
+        </Suspense>
 
         <div className="space-y-6 animate-fadeIn">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -386,7 +393,14 @@ export default function Homepage() {
               variant="default"
             />
           </div>
-          <HeatMap data={heatmap} zoneIntensity={heatmap?.zone_intensity} className="h-[300px] sm:h-[400px] md:h-[450px]" />
+          
+          <Suspense fallback={
+            <div className="h-[300px] sm:h-[400px] md:h-[450px] animate-pulse bg-command-panel border border-command-border rounded-xl flex items-center justify-center text-xs text-command-muted">
+              Initializing live mapping view...
+            </div>
+          }>
+            <HeatMap data={heatmap} zoneIntensity={heatmap?.zone_intensity} className="h-[300px] sm:h-[400px] md:h-[450px]" />
+          </Suspense>
         </div>
       </div>
     </div>

@@ -48,6 +48,7 @@ body {
   background: var(--command-border);
   border-radius: 0.75rem;
   border: 1px solid rgba(80, 114, 100, 0.15);
+  contain: layout style;
 }
 
 ::-webkit-scrollbar {
@@ -68,6 +69,7 @@ body {
 /* Micro-animations and hover transitions for premium interactivity */
 .interactive-card {
   transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease, background-color 0.3s ease;
+  will-change: transform, box-shadow;
 }
 
 .interactive-card:hover {
@@ -108,6 +110,7 @@ body {
   -webkit-backdrop-filter: blur(12px) !important;
   border-color: var(--command-border-glass) !important;
   transition: background-color 0.3s ease, border-color 0.3s ease;
+  contain: layout style;
 }
 
 /* Redefine grey text scales to maintain readability - Light Mode */
@@ -191,6 +194,7 @@ body {
   -webkit-backdrop-filter: blur(12px) !important;
   border: 1px solid var(--command-border-glass) !important;
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
+  contain: layout style;
 }
 
 
@@ -647,10 +651,3 @@ header {
   --command-success: #8A9E85 !important;
   --color-command-success: #8A9E85 !important;
 }
-
-
-
-
-
-
-
