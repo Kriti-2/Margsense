@@ -105,7 +105,10 @@ export default function Corridors() {
               : 'text-command-muted hover:text-white'
           }`}
         >
-          🏥 Emergency Corridors
+          <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          Emergency Corridors
         </button>
         <button
           onClick={() => setActiveTab('recidivism')}
@@ -115,9 +118,13 @@ export default function Corridors() {
               : 'text-command-muted hover:text-white'
           }`}
         >
-          🔁 Recidivism Heatmap
+          <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 6.567" />
+          </svg>
+          Recidivism Heatmap
         </button>
       </div>
+
 
       {activeTab === 'protect' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fadeIn">
@@ -169,8 +176,11 @@ export default function Corridors() {
                           Status: <span className="font-bold" style={{ color: corridorColors[corridor.status] }}>{corridor.status}</span>
                         </div>
                         {corridor.status === 'BLOCKED' && (
-                          <div className="text-xs mt-1 text-command-success font-semibold">
-                            ⚠️ Alternative route calculated and suggested (green).
+                          <div className="text-xs mt-1 text-command-success font-semibold flex items-center gap-1">
+                            <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <span>Alternative route calculated and suggested (green).</span>
                           </div>
                         )}
                       </Popup>

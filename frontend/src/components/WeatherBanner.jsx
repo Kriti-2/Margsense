@@ -1,19 +1,59 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 
-const WEATHER_ICONS = {
-  Thunderstorm: '⛈️',
-  Drizzle: '🌦️',
-  Rain: '🌧️',
-  Snow: '❄️',
-  Mist: '🌫️',
-  Haze: '🌫️',
-  Fog: '🌫️',
-  Smoke: '🌫️',
-  Dust: '🌪️',
-  Clear: '☀️',
-  Clouds: '⛅',
-};
+function WeatherIcon({ condition, className = "h-7 w-7 shrink-0" }) {
+  switch (condition) {
+    case 'Thunderstorm':
+      return (
+        <svg className={`${className} text-yellow-400`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3c-1.2 0-2.4.4-3.4 1.2A6.5 6.5 0 003 10.5a5.5 5.5 0 005.5 5.5H18a5 5 0 005-5 5.5 5.5 0 00-5.5-5.5c-.3 0-.6 0-.8.1A6.5 6.5 0 0012 3z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13 16l-3 4h3v3l4-5h-4v-2z" />
+        </svg>
+      );
+    case 'Drizzle':
+    case 'Rain':
+      return (
+        <svg className={`${className} text-blue-400`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3c-1.2 0-2.4.4-3.4 1.2A6.5 6.5 0 003 10.5a5.5 5.5 0 005.5 5.5H18a5 5 0 005-5 5.5 5.5 0 00-5.5-5.5c-.3 0-.6 0-.8.1A6.5 6.5 0 0012 3z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M10 18v3m4-3v3m-8-2v2" />
+        </svg>
+      );
+    case 'Snow':
+      return (
+        <svg className={`${className} text-blue-200`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v18M3 12h18m-3-6L6 18M6 6l12 12" />
+        </svg>
+      );
+    case 'Mist':
+    case 'Haze':
+    case 'Fog':
+    case 'Smoke':
+      return (
+        <svg className={`${className} text-gray-400`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 8h16M6 12h12M4 16h16" />
+        </svg>
+      );
+    case 'Dust':
+      return (
+        <svg className={`${className} text-amber-500`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M6 10h12M8 14h8M10 18h4" />
+        </svg>
+      );
+    case 'Clear':
+      return (
+        <svg className={`${className} text-yellow-400`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
+        </svg>
+      );
+    case 'Clouds':
+    default:
+      return (
+        <svg className={`${className} text-blue-300`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+        </svg>
+      );
+  }
+}
 
 const ALERT_STYLES = {
   CRITICAL: {
@@ -77,7 +117,6 @@ export default function WeatherBanner({ weatherData, liveWeather }) {
 
   if (loading || !weather) return null;
 
-  const icon = WEATHER_ICONS[weather.condition] || '🌤️';
   const alertLevel = weather.alert_level || 'NONE';
   const style = ALERT_STYLES[alertLevel] || ALERT_STYLES.NONE;
   const isEscalated = weather.multiplier > 1.0;
@@ -100,7 +139,7 @@ export default function WeatherBanner({ weatherData, liveWeather }) {
       <div className="relative flex flex-wrap items-center gap-3 sm:gap-4">
         {/* Weather icon + condition */}
         <div className="flex items-center gap-2">
-          <span className="text-2xl">{icon}</span>
+          <WeatherIcon condition={weather.condition} />
           <div>
             <p className="weather-title text-sm font-bold">
               {weather.condition}
@@ -114,19 +153,28 @@ export default function WeatherBanner({ weatherData, liveWeather }) {
 
         {/* Escalation badge */}
         {isEscalated ? (
-          <div className="weather-badge rounded-lg px-3 py-1.5 text-xs font-bold">
-            ⚠ Risk {weather.multiplier}x · Severity +{weather.severity_boost}
+          <div className="weather-badge rounded-lg px-3 py-1.5 text-xs font-bold flex items-center gap-1">
+            <svg className="h-3.5 w-3.5 text-orange-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span>Risk {weather.multiplier}x · Severity +{weather.severity_boost}</span>
           </div>
         ) : (
-          <div className="weather-badge rounded-lg px-3 py-1.5 text-xs font-medium">
-            ✓ Normal risk levels
+          <div className="weather-badge rounded-lg px-3 py-1.5 text-xs font-medium flex items-center gap-1">
+            <svg className="h-3.5 w-3.5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <span>Normal risk levels</span>
           </div>
         )}
 
         {/* Rain detail */}
         {weather.rain_mm_1h > 0 && (
-          <span className="weather-rain-info text-xs font-semibold">
-            🌧 {weather.rain_mm_1h} mm/h
+          <span className="weather-rain-info text-xs font-semibold flex items-center gap-1">
+            <svg className="h-3.5 w-3.5 text-blue-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M20 13c0 5-3.5 7-8 7s-8-2-8-7c0-4.3 3.3-7.5 7.4-8.7a1 1 0 011.2.9c.3 1.8 1.4 3.5 3 4.5 2 1.3 4.4 1.7 4.4 3.3z" />
+            </svg>
+            <span>{weather.rain_mm_1h} mm/h</span>
           </span>
         )}
 

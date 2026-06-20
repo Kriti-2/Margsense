@@ -239,7 +239,7 @@ export default function LiveViolationReporter() {
     setLoading(true);
     try {
       const response = await api.ingestViolation(payload);
-      showToast('success', `⚡ Demo Violation ingested successfully in ${randomZone.name}!`);
+      showToast('success', `Demo Violation ingested successfully in ${randomZone.name}!`);
 
       const ingestedData = response.data.ingested || payload;
       setRecentReports((prev) => [
@@ -451,7 +451,10 @@ export default function LiveViolationReporter() {
               onClick={handleGenerateRandom}
               className="w-full flex items-center justify-center gap-2 rounded-lg border border-command-border bg-command-bg py-2.5 text-xs font-medium text-white hover:bg-white/5 transition-colors"
             >
-              <span className="text-command-warning text-sm">⚙</span>
+              <svg className="h-4 w-4 text-command-warning shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
               Generate Random Bengaluru Data
             </button>
 
@@ -461,7 +464,9 @@ export default function LiveViolationReporter() {
               disabled={loading}
               className="w-full flex items-center justify-center gap-2 rounded-lg bg-command-success py-2.5 text-xs font-semibold text-white hover:opacity-90 transition-opacity disabled:opacity-50"
             >
-              <span className="text-sm">⚡</span>
+              <svg className="h-4 w-4 text-white shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
               Send Live Demo Violation
             </button>
           </div>
@@ -523,7 +528,12 @@ export default function LiveViolationReporter() {
                     </td>
                     <td className="py-3 px-4 text-xs">
                       {report.near_intersection ? (
-                        <span className="text-command-warning">⚠️ Yes</span>
+                        <span className="text-command-warning flex items-center gap-1">
+                          <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
+                          Yes
+                        </span>
                       ) : (
                         <span className="text-gray-600">No</span>
                       )}

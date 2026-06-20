@@ -19,7 +19,7 @@ function StatPill({ icon, iconBg, value, label, sub }) {
   return (
     <div className="flex items-center gap-3 px-4 py-3 border-r border-gray-100 last:border-r-0 flex-1 min-w-0">
       <div className={`flex h-9 w-9 items-center justify-center rounded-full shrink-0 ${iconBg}`}>
-        <span className="text-base">{icon}</span>
+        {icon}
       </div>
       <div className="min-w-0">
         <div className="text-sm font-bold text-gray-900 leading-tight">{value}</div>
@@ -170,35 +170,56 @@ function HeroSection({ analytics, lastTick, connected }) {
           </div>
 
           <StatPill
-            icon="🛡️"
+            icon={
+              <svg className="h-4.5 w-4.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            }
             iconBg="bg-red-50"
             value={violationsLastHour}
             label="Violations"
             sub="Last Hour"
           />
           <StatPill
-            icon="📍"
+            icon={
+              <svg className="h-4.5 w-4.5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            }
             iconBg="bg-orange-50"
             value={hotspots}
             label="High Risk"
             sub="Zones"
           />
           <StatPill
-            icon="🎥"
+            icon={
+              <svg className="h-4.5 w-4.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 00-2 2z" />
+              </svg>
+            }
             iconBg="bg-blue-50"
             value="4"
             label="CCTV"
             sub="Streams"
           />
           <StatPill
-            icon="🔔"
+            icon={
+              <svg className="h-4.5 w-4.5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+            }
             iconBg="bg-purple-50"
             value={analytics ? Object.keys(analytics?.violation_trends || {}).length || '12' : '—'}
             label="Active"
             sub="Alerts"
           />
           <StatPill
-            icon="📈"
+            icon={
+              <svg className="h-4.5 w-4.5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+            }
             iconBg="bg-[#F9EDED]"
             value={congestion}
             label="Congestion"

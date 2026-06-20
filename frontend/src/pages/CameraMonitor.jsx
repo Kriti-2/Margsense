@@ -186,7 +186,7 @@ export default function CameraMonitor() {
           const loadedModel = await window.cocoSsd.load({ base: 'lite_mobilenet_v2' });
           setModel(loadedModel);
           setTfStatus('active');
-          addLog("🚀 REAL-TIME YOLO INFERENCE MODE ONLINE (WebGL GPU Acceleration)", "success");
+          addLog("[INFERENCE ENGINE] REAL-TIME YOLO INFERENCE MODE ONLINE (WebGL GPU Acceleration)", "success");
         } else {
           // If they didn't load from index.html, load them sequentially and synchronously
           addLog("TensorFlow.js not pre-loaded. Fetching libraries dynamically...", "info");
@@ -217,7 +217,7 @@ export default function CameraMonitor() {
             const loadedModel = await window.cocoSsd.load({ base: 'lite_mobilenet_v2' });
             setModel(loadedModel);
             setTfStatus('active');
-            addLog("🚀 REAL-TIME YOLO INFERENCE MODE ONLINE (WebGL GPU Acceleration)", "success");
+            addLog("[INFERENCE ENGINE] REAL-TIME YOLO INFERENCE MODE ONLINE (WebGL GPU Acceleration)", "success");
           } else {
             throw new Error("COCO-SSD libraries failed to load dynamically.");
           }
@@ -447,7 +447,7 @@ export default function CameraMonitor() {
     const vehicleType = VEHICLE_TYPES[Math.floor(Math.random() * VEHICLE_TYPES.length)];
     const violationType = cam.violationType || VIOLATIONS[Math.floor(Math.random() * VIOLATIONS.length)];
 
-    addLog(`[${cam.id}] ⚠️ VIOLATION DETECTED: Stopped ${vehicleType} (${plate}) in ${violationType} area. Starting stationary verification...`, 'warning');
+    addLog(`[${cam.id}] [VIOLATION] DETECTED: Stopped ${vehicleType} (${plate}) in ${violationType} area. Starting stationary verification...`, 'warning');
     
     // Set active violation tracking state
     setActiveViolations((prev) => ({
@@ -482,7 +482,7 @@ export default function CameraMonitor() {
           return updated;
         });
 
-        addLog(`[${cam.id}] 🚨 STATIONARY >120s: Issuing challan for ${plate} (${vehicleType})...`, 'danger');
+        addLog(`[${cam.id}] [ALERT] STATIONARY >120s: Issuing challan for ${plate} (${vehicleType})...`, 'danger');
 
         try {
           const payload = {
@@ -495,11 +495,11 @@ export default function CameraMonitor() {
           };
           
           await api.ingestViolation(payload);
-          addLog(`[${cam.id}] ✅ Ingestion complete. Challan successfully issued to ${plate}.`, 'success');
-          showToast('success', `🎥 CCTV Ingested violation at ${cam.zone} (${plate})!`);
+          addLog(`[${cam.id}] [SUCCESS] Ingestion complete. Challan successfully issued to ${plate}.`, 'success');
+          showToast('success', `CCTV Ingested violation at ${cam.zone} (${plate})!`);
         } catch (err) {
           console.error(err);
-          addLog(`[${cam.id}] ❌ Ingestion API error: ${err.response?.data?.detail || err.message}`, 'error');
+          addLog(`[${cam.id}] [ERROR] Ingestion API error: ${err.response?.data?.detail || err.message}`, 'error');
           showToast('error', 'CCTV failed to dispatch violation to API');
         }
       }
@@ -588,8 +588,11 @@ export default function CameraMonitor() {
               zIndex: 10
             }}
           >
-            <div className="absolute top-0 left-0 -mt-5 bg-command-danger px-1 text-[9px] font-bold text-white uppercase rounded">
-              🚨 {isViolating.violation}
+            <div className="absolute top-0 left-0 -mt-5 bg-command-danger px-1 text-[9px] font-bold text-white uppercase rounded flex items-center gap-1">
+              <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              {isViolating.violation}
             </div>
             <div className="text-[10px] text-white font-mono text-center pt-1 leading-tight">
               {isViolating.plate}
@@ -739,8 +742,22 @@ export default function CameraMonitor() {
                   {renderBoundingBoxes(cam.id)}
 
                   {/* Location Tag */}
-                  <div className="absolute bottom-3 left-3 bg-black/75 px-2 py-1 rounded border border-command-border text-[10px] font-mono text-gray-400">
-                    LAT: {cam.lat.toFixed(5)} · LNG: {cam.lng.toFixed(5)}
+                  <div className="absolute bottom-3 left-3 flex flex-col gap-1">
+                    <div className="bg-black/75 px-2 py-1 rounded border border-command-border text-[10px] font-mono text-gray-400 flex items-center gap-1.5">
+                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      LAT: {cam.lat.toFixed(5)} · LNG: {cam.lng.toFixed(5)}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleUseGPS}
+                      disabled={gpsLoading}
+                      className="text-[10px] text-command-accent hover:underline flex items-center gap-1.5 font-semibold cursor-pointer w-fit bg-black/50 px-2 py-0.5 rounded border border-command-accent/20"
+                    >
+                      {gpsLoading ? 'Locating...' : 'Use GPS Location'}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -768,15 +785,41 @@ export default function CameraMonitor() {
       {/* Terminal log panel */}
       <div className="rounded-xl border border-command-border bg-command-panel p-6 space-y-3">
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between border-b border-command-border pb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">🖥️</span>
+          <div className="flex items-center gap-2.5 text-left">
+            <svg className="h-5 w-5 text-command-accent shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
             <div>
               <h3 className="text-lg font-semibold text-white">AI OCR & Bounding Box Terminal</h3>
               <p className="text-xs text-command-muted">Live console streaming detection telemetry from edge nodes</p>
             </div>
           </div>
 
+
           <div className="flex flex-wrap items-center gap-4">
+            <button
+              type="button"
+              onClick={handleGenerateRandom}
+              className="flex items-center justify-center gap-2 rounded-lg border border-command-border bg-command-bg px-3 py-2 text-xs font-medium text-white hover:bg-white/5 transition-colors cursor-pointer"
+            >
+              <svg className="h-4 w-4 text-command-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Random Data
+            </button>
+            <button
+              type="button"
+              onClick={handleSendDemo}
+              disabled={loading}
+              className="flex items-center justify-center gap-2 rounded-lg bg-command-success px-3 py-2 text-xs font-semibold text-white hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer"
+            >
+              <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Demo Violation
+            </button>
+
             {/* Toggle YOLO Mode */}
             <div className="flex items-center gap-2">
               <span className="text-xs text-gray-400 font-medium">YOLO Detection:</span>
@@ -839,8 +882,10 @@ export default function CameraMonitor() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn">
           <div className="w-full max-w-sm rounded-2xl border border-command-border bg-command-panel p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-command-border pb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">🔍</span>
+              <div className="flex items-center gap-2 text-left">
+                <svg className="h-5 w-5 text-command-accent shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
                 <h3 className="text-lg font-bold text-white">Vehicle Inspector</h3>
               </div>
               <button 
@@ -878,7 +923,10 @@ export default function CameraMonitor() {
             <div className="flex items-center border border-gray-300 bg-yellow-50/90 rounded-lg px-4 py-2 font-mono font-bold text-gray-800 tracking-wider shadow-inner w-fit mx-auto my-4 relative overflow-hidden">
               <div className="border-r border-gray-300 pr-3 mr-3 text-[10px] text-blue-800 flex flex-col items-center leading-none">
                 <span className="font-sans font-extrabold text-blue-800">IND</span>
-                <span className="text-[8px] mt-0.5">⚡</span>
+                <svg className="h-2.5 w-2.5 text-blue-800 mt-0.5 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 2v20M2 12h20M7 7l10 10M7 17L17 7" />
+                </svg>
               </div>
               <span className="text-xl tracking-widest">{selectedVehicle.plate}</span>
             </div>
@@ -901,14 +949,15 @@ export default function CameraMonitor() {
                     return next;
                   });
                   setSelectedVehicle(prev => ({ ...prev, status: 'TOWED' }));
-                  addLog(`[${selectedVehicle.camId}] 🚨 TOWING DISPATCHED: Deploying towing unit for vehicle ${selectedVehicle.plate} (${selectedVehicle.class})`, 'danger');
+                  addLog(`[${selectedVehicle.camId}] [ALERT] TOWING DISPATCHED: Deploying towing unit for vehicle ${selectedVehicle.plate} (${selectedVehicle.class})`, 'danger');
                   showToast('success', `Towing dispatched for ${selectedVehicle.plate}!`);
                 }}
                 disabled={selectedVehicle.status === 'TOWED'}
                 className="flex-1 rounded-xl bg-command-danger text-white px-4 py-2.5 text-xs font-semibold hover:opacity-95 active:scale-95 disabled:opacity-50 disabled:scale-100 transition-all shadow-md shadow-command-danger/20 cursor-pointer"
               >
-                {selectedVehicle.status === 'TOWED' ? 'Towed ✅' : 'Dispatch Towing 🚨'}
+                {selectedVehicle.status === 'TOWED' ? 'Towed' : 'Dispatch Towing'}
               </button>
+
             </div>
           </div>
         </div>
