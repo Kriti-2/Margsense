@@ -12,6 +12,7 @@ import SeverityQueue from '../components/SeverityQueue';
 import RecidivismMap from '../components/RecidivismMap';
 import TimeLapse from '../components/TimeLapse';
 import WeatherBanner from '../components/WeatherBanner';
+import { useTranslation } from '../context/LanguageContext';
 
 const SLIDES = [
   '/ChatGPT Image Jun 19, 2026, 08_53_06 PM.png',
@@ -215,6 +216,7 @@ function HeroSection({ analytics, lastTick, connected }) {
 // ── Main Homepage component ─────────────────────────────────────────────────
 export default function Homepage() {
   const { isOfficer } = useAuth();
+  const { t } = useTranslation();
   const [heatmap, setHeatmap] = useState(null);
   const [analytics, setAnalytics] = useState(null);
   const [predictions, setPredictions] = useState(null);
@@ -343,14 +345,14 @@ export default function Homepage() {
       <div className="space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Overview</h2>
-            <p className="mt-0.5 text-sm text-gray-400">Bengaluru parking congestion &amp; enforcement dashboard</p>
+            <h2 className="text-xl font-bold text-gray-900">{t('overview')}</h2>
+            <p className="mt-0.5 text-sm text-gray-400">{t('dashboardSubtitle')}</p>
           </div>
           <div className="flex items-center gap-2 text-xs text-gray-400 border border-gray-200 rounded-lg px-3 py-1.5 bg-white shadow-sm">
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            Last 1 Hour
+            {t('last1Hour')}
             <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
@@ -362,9 +364,9 @@ export default function Homepage() {
         {/* Tabs */}
         <div className="flex overflow-x-auto select-none no-scrollbar flex-nowrap bg-white border border-gray-100 p-1.5 rounded-xl w-full sm:w-fit gap-1.5 shadow-sm">
           {[
-            { id: 'overview', label: '📊 Live Overview' },
-            { id: 'economic', label: '💸 Economic Impact' },
-            isOfficer && { id: 'operations', label: '🚨 Patrol Operations' },
+            { id: 'overview', label: t('liveOverviewTab') },
+            { id: 'economic', label: t('economicImpactTab') },
+            isOfficer && { id: 'operations', label: t('patrolOperationsTab') },
           ].filter(Boolean).map((tab) => (
             <button
               key={tab.id}
@@ -384,28 +386,28 @@ export default function Homepage() {
           <div className="space-y-6 animate-fadeIn">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
               <KPICard
-                title="Total Violations"
+                title={t('totalViolations')}
                 value={kpis.total_violations?.toLocaleString('en-IN') || '—'}
                 subtitle="Bengaluru police dataset"
                 sparklineData={analytics?.violation_trends?.map((t) => t.violations) || []}
                 variant="accent"
               />
               <KPICard
-                title="Active Hotspots"
+                title={t('activeHotspots')}
                 value={kpis.active_hotspots || 0}
                 subtitle="Live congestion ≥ 50"
                 sparklineData={activeHotspotsHistory}
                 variant="warning"
               />
               <KPICard
-                title="Violations (1h)"
+                title={t('violations1h')}
                 value={lastTick?.kpis?.violations_last_hour ?? '—'}
                 subtitle="Rolling live window"
                 sparklineData={violationsLastHourHistory}
                 variant="danger"
               />
               <KPICard
-                title="Avg Congestion Score"
+                title={t('avgCongestionScore')}
                 value={kpis.avg_congestion_score || 0}
                 subtitle="Traffic + violation signal"
                 sparklineData={avgCongestionHistory}

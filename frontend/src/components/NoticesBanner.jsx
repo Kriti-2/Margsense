@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../api/client';
+import { useTranslation, TranslatedText } from '../context/LanguageContext';
 
 const CYCLE_DURATION = 8000; // ms between auto-cycle
 
@@ -20,13 +21,7 @@ export default function NoticesBanner() {
   const [isListViewOpen, setIsListViewOpen] = useState(false);
 
   // Language & HUD
-  const [lang, setLang] = useState(() => {
-    try {
-      return localStorage.getItem('parksense_lang') || 'en';
-    } catch {
-      return 'en';
-    }
-  });
+  const { lang, changeLanguage } = useTranslation();
   const [isCrazyMode, setIsCrazyMode] = useState(() => {
     try {
       const s = localStorage.getItem('parksense_crazy_mode');
@@ -43,6 +38,18 @@ export default function NoticesBanner() {
       return false;
     }
   });
+
+  // ── Active notices ──
+  const activeNotices = useMemo(
+    () => notices.filter((n) => !dismissedIds.includes(n.id)),
+    [notices, dismissedIds]
+  );
+
+  const safeCurrentIndex = useMemo(() => {
+    return currentIndex >= activeNotices.length ? 0 : currentIndex;
+  }, [currentIndex, activeNotices.length]);
+
+  const cur = activeNotices[safeCurrentIndex];
 
   // ── Voice / Speech Synthesis ──
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -83,7 +90,56 @@ export default function NoticesBanner() {
     setIsSpeaking(false);
   }, []);
 
-  const speakNotice = useCallback((noticeText) => {
+  const translate = useCallback((notice) => {
+    const en = { title: notice.title, message: notice.message };
+    let hi = { title: 'महत्वपूर्ण सूचना', message: notice.message };
+    let kn = { title: 'ಪ್ರಮುಖ ಮಾಹಿತಿ', message: notice.message };
+
+    if (notice.id === 'civic-bbmp-orr') {
+      hi = {
+        title: '🚧 ORR सड़क मरम्मत कार्य शुरू',
+        message: 'सिल्क बोर्ड जंक्शन के पास आउटर रिंग रोड (ORR) पर बीबीएमपी द्वारा सड़क मरम्मत एवं उपयोगिता कार्य शुरू। कृपया देरी की उम्मीद रखें।',
+      };
+      kn = {
+        title: '🚧 ORR ರಸ್ತೆ ದುರಸ್ತಿ ಕಾಮಗಾರಿ ಪ್ರಾರಂಭ',
+        message: 'ಸಿಲ್ಕ್ ಬೋರ್ಡ್ ಜಂಕ್ಷನ್ ಬಳಿ ಹೊರ ವರ್ತುಲ ರಸ್ತೆಯಲ್ಲಿ (ORR) ಬಿಬಿಎಂಪಿಯಿಂದ ರಸ್ತೆ ದುರಸ್ತಿ ಕಾಮಗಾರಿ ಆರಂಭವಾಗಿದೆ. ಪ್ರಯಾಣದಲ್ಲಿ ವಿಳಂಬ ಸಾಧ್ಯತೆ.',
+      };
+    } else if (notice.id === 'civic-smart-parking') {
+      hi = {
+        title: '🚗 इंदिरानगर IoT स्मार्ट पार्किंग लाइव',
+        message: 'इंदिरानगर 100 फीट रोड पर नए IoT-सक्षम स्मार्ट पार्किंग स्लॉट अब लाइव हैं। ParkSense से स्लॉट बुक करें।',
+      };
+      kn = {
+        title: '🚗 ಇಂದಿರಾನಗರ IoT ಸ್ಮಾರ್ಟ್ ಪಾರ್ಕಿಂಗ್ ಲೈವ್',
+        message: 'ಇಂದಿರಾ ನಗರ 100 ಅಡಿ ರಸ್ತೆಯಲ್ಲಿ ಹೊಸ IoT ಆಧಾರಿತ ಸ್ಮಾರ್ಟ್ ಪಾರ್ಕಿಂಗ್ ಲಭ್ಯವಿದೆ. ಪಾರ್ಕ್ ಸೆನ್ಸ್ ಮೂಲಕ ಬುಕ್ ಮಾಡಿ.',
+      };
+    } else if (notice.id === 'civic-metro-extension') {
+      hi = {
+        title: '🚌 मेट्रो फीडर बसों की आवृत्ति बढ़ी',
+        message: 'भीड़ कम करने के लिए, BMRCL ने पीक आवर्स में इंदिरानगर मेट्रो स्टेशन से IT हब तक फीडर बसों की संख्या बढ़ाई है।',
+      };
+      kn = {
+        title: '🚌 ಮೆಟ್ರೋ ಫೀಡರ್ ಬಸ್‌ಗಳ ಸಂಚಾರ ಹೆಚ್ಚಳ',
+        message: 'ದಟ್ಟಣೆ ಕಡಿಮೆ ಮಾಡಲು BMRCL ಪೀಕ್ ಅವರ್‌ಗಳಲ್ಲಿ ಇಂದಿರಾನಗರ ಮೆಟ್ರೋ ನಿಲ್ದಾಣದಿಂದ ಐಟಿ ಹಬ್‌ಗಳಿಗೆ ಫೀಡರ್ ಬಸ್‌ಗಳ ಸಂಖ್ಯೆಯನ್ನು ಹೆಚ್ಚಿಸಿದೆ.',
+      };
+    } else if (notice.type === 'traffic' && notice.title.includes('Traffic Slowdown')) {
+      const zone = notice.title.split(': ')[1] || 'ज़ोन';
+      const m = notice.message.match(/(\d+(\.\d+)?%)/);
+      const pct = m ? m[0] : 'काफ़ी';
+      hi = {
+        title: `🚨 ${zone} में भारी ट्रैफ़िक जाम`,
+        message: `${zone} में अवैध पार्किंग के कारण वाहन गति सामान्य से ${pct} कम। कृपया वैकल्पिक मार्ग अपनाएँ।`,
+      };
+      kn = {
+        title: `🚨 ${zone} ನಲ್ಲಿ ಭಾರಿ ದಟ್ಟಣೆ`,
+        message: `${zone} ನಲ್ಲಿ ಅನಧಿಕೃತ ಪಾರ್ಕಿಂಗ್‌ನಿಂದಾಗಿ ವಾಹನಗಳ ವೇಗ ಶೇ. ${pct} ರಷ್ಟು ಕಡಿಮೆಯಾಗಿದೆ. ಪರ್ಯಾಯ ಮಾರ್ಗ ಬಳಸಿ.`,
+      };
+    }
+
+    return { en, hi, kn };
+  }, []);
+
+  const speakNotice = useCallback(async (title, message) => {
     const synth = synthRef.current;
     if (!synth) return;
 
@@ -95,27 +151,47 @@ export default function NoticesBanner() {
 
     synth.cancel();
 
+    let translatedTitle = title;
+    let translatedMessage = message;
+
+    if (lang !== 'en') {
+      const getTrans = async (text) => {
+        // Try static translation mapping first
+        const staticTrans = translate({ id: cur?.id, title, message, type: cur?.type })[lang];
+        if (staticTrans && staticTrans.title && text === title) return staticTrans.title;
+        if (staticTrans && staticTrans.message && text === message) return staticTrans.message;
+
+        const cacheKey = `parksense_trans_${lang}_${text}`;
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) return cached;
+
+        try {
+          const res = await api.translate(text, lang);
+          const trans = res.data?.translated_text || text;
+          localStorage.setItem(cacheKey, trans);
+          return trans;
+        } catch {
+          return text;
+        }
+      };
+
+      translatedTitle = await getTrans(title);
+      translatedMessage = await getTrans(message);
+    }
+
+    const speakText = `${translatedTitle}. ${translatedMessage}`;
+
     setTimeout(() => {
-      const utterance = new SpeechSynthesisUtterance(noticeText);
+      const utterance = new SpeechSynthesisUtterance(speakText);
       utteranceRef.current = utterance;
-      utterance.lang = lang === 'en' ? 'en-US' : 'hi-IN';
+      utterance.lang = lang === 'en' ? 'en-US' : lang === 'hi' ? 'hi-IN' : 'kn-IN';
 
       const availableVoices = voices.length ? voices : synth.getVoices();
       let voice = null;
       if (lang === 'hi') {
-        // 1. Try exact matches
-        voice = availableVoices.find(v => {
-          const l = v.lang.toLowerCase();
-          return l === 'hi-in' || l === 'hi_in';
-        });
-        // 2. Try prefix matches (starts with hi)
-        if (!voice) {
-          voice = availableVoices.find(v => v.lang.toLowerCase().startsWith('hi'));
-        }
-        // 3. Try name contains hindi or india
-        if (!voice) {
-          voice = availableVoices.find(v => v.name.toLowerCase().includes('hindi') || v.name.toLowerCase().includes('india'));
-        }
+        voice = availableVoices.find(v => v.lang.toLowerCase().startsWith('hi') || v.name.toLowerCase().includes('hindi'));
+      } else if (lang === 'kn') {
+        voice = availableVoices.find(v => v.lang.toLowerCase().startsWith('kn') || v.name.toLowerCase().includes('kannada'));
       } else {
         voice = availableVoices.find(v => v.lang.toLowerCase().includes('en-us') || v.lang.toLowerCase().includes('en-gb') || v.lang.toLowerCase().includes('en'));
       }
@@ -139,7 +215,7 @@ export default function NoticesBanner() {
 
       synth.speak(utterance);
     }, 50);
-  }, [lang, isSpeaking, voices]);
+  }, [lang, isSpeaking, voices, translate, cur]);
 
   useEffect(() => {
     stopSpeaking();
@@ -225,15 +301,7 @@ export default function NoticesBanner() {
     };
   }, []);
 
-  // ── Active notices ──
-  const activeNotices = useMemo(
-    () => notices.filter((n) => !dismissedIds.includes(n.id)),
-    [notices, dismissedIds]
-  );
 
-  const safeCurrentIndex = useMemo(() => {
-    return currentIndex >= activeNotices.length ? 0 : currentIndex;
-  }, [currentIndex, activeNotices.length]);
 
   // ── Auto-cycle with timer ──
   useEffect(() => {
@@ -252,37 +320,7 @@ export default function NoticesBanner() {
   }, [activeNotices.length, isPaused, selectedNotice, isListViewOpen, isExpanded, currentIndex, isSpeaking]);
 
   // ── Translation dictionary ──
-  const translate = useCallback((notice) => {
-    const en = { title: notice.title, message: notice.message };
-    let hi = { title: 'महत्वपूर्ण सूचना', message: notice.message };
 
-    if (notice.id === 'civic-bbmp-orr') {
-      hi = {
-        title: '🚧 ORR सड़क मरम्मत कार्य शुरू',
-        message: 'सिल्क बोर्ड जंक्शन के पास आउटर रिंग रोड (ORR) पर बीबीएमपी द्वारा सड़क मरम्मत एवं उपयोगिता कार्य शुरू। कृपया देरी की उम्मीद रखें।',
-      };
-    } else if (notice.id === 'civic-smart-parking') {
-      hi = {
-        title: '🚗 इंदिरानगर IoT स्मार्ट पार्किंग लाइव',
-        message: 'इंदिरानगर 100 फीट रोड पर नए IoT-सक्षम स्मार्ट पार्किंग स्लॉट अब लाइव हैं। ParkSense से स्लॉट बुक करें।',
-      };
-    } else if (notice.id === 'civic-metro-extension') {
-      hi = {
-        title: '🚌 मेट्रो फीडर बसों की आवृत्ति बढ़ी',
-        message: 'भीड़ कम करने के लिए, BMRCL ने पीक आवर्स में इंदिरानगर मेट्रो स्टेशन से IT हब तक फीडर बसों की संख्या बढ़ाई है।',
-      };
-    } else if (notice.type === 'traffic' && notice.title.includes('Traffic Slowdown')) {
-      const zone = notice.title.split(': ')[1] || 'ज़ोन';
-      const m = notice.message.match(/(\d+(\.\d+)?%)/);
-      const pct = m ? m[0] : 'काफ़ी';
-      hi = {
-        title: `🚨 ${zone} में भारी ट्रैफ़िक जाम`,
-        message: `${zone} में अवैध पार्किंग के कारण वाहन गति सामान्य से ${pct} कम। कृपया वैकल्पिक मार्ग अपनाएँ।`,
-      };
-    }
-
-    return { en, hi };
-  }, []);
 
   // ── Handlers ──
   const goNext = (e) => { e?.stopPropagation(); playSynthSound('click'); setCurrentIndex((p) => (p + 1) % activeNotices.length); };
@@ -298,9 +336,8 @@ export default function NoticesBanner() {
 
   const toggleLang = () => {
     playSynthSound('click');
-    const next = lang === 'en' ? 'hi' : 'en';
-    setLang(next);
-    localStorage.setItem('parksense_lang', next);
+    const next = lang === 'en' ? 'hi' : lang === 'hi' ? 'kn' : 'en';
+    changeLanguage(next);
   };
 
   const toggleHud = () => {
@@ -339,9 +376,8 @@ export default function NoticesBanner() {
 
   // ── Bail if nothing to show ──
   if (activeNotices.length === 0) return null;
-  const cur = activeNotices[safeCurrentIndex];
   const tr = translate(cur);
-  const t = tr[lang]; // current language text
+  const t = tr[lang] || tr['en']; // current language text
 
   // ── Theme ──
   const getTheme = (n) => {
@@ -475,16 +511,16 @@ export default function NoticesBanner() {
               <div className="lang-flip-enter flex items-center gap-2.5 text-base sm:text-lg font-semibold tracking-tight">
                 {isCrazyMode && (
                   <span className="text-command-accent text-xs font-black shrink-0 uppercase">
-                    [{lang === 'en' ? 'EN' : 'HI'}]&gt;
+                    [{lang.toUpperCase()}]&gt;
                   </span>
                 )}
                 <span className="text-xs font-black uppercase tracking-widest text-command-muted shrink-0">
                   {cur.source}
                 </span>
                 <span className="text-gray-500 text-lg">|</span>
-                <span className={`font-extrabold truncate ${th.glow}`}>{t.title}</span>
+                <span className={`font-extrabold truncate ${th.glow}`}><TranslatedText text={cur.title} /></span>
                 <span className="hidden lg:inline text-gray-500">—</span>
-                <span className="hidden lg:inline text-gray-300 truncate max-w-2xl font-normal text-sm">{t.message}</span>
+                <span className="hidden lg:inline text-gray-300 truncate max-w-2xl font-normal text-sm"><TranslatedText text={cur.message} /></span>
               </div>
             </div>
 
@@ -504,14 +540,13 @@ export default function NoticesBanner() {
 
             {/* Language toggle pill */}
             <button onClick={(e) => { e.stopPropagation(); toggleLang(); }}
-              className="flex items-center h-9 rounded-full border border-command-border/50 bg-command-bg/40 overflow-hidden cursor-pointer transition-all hover:border-command-accent/40 group"
-              title={lang === 'en' ? 'Switch to Hindi' : 'Switch to English'}>
-              <span className={`px-3 py-1 text-xs font-black transition-all ${lang === 'en' ? 'bg-command-accent text-white' : 'text-gray-400 group-hover:text-white'}`}>EN</span>
-              <span className={`px-3 py-1 text-xs font-black transition-all ${lang === 'hi' ? 'bg-command-accent text-white' : 'text-gray-400 group-hover:text-white'}`}>हि</span>
+              className="flex items-center h-9 rounded-xl border border-command-border/50 bg-command-bg/40 overflow-hidden cursor-pointer transition-all hover:border-command-accent/40 group px-3 py-1 text-xs font-black text-white"
+              title="Switch Language">
+              <span>{lang.toUpperCase()}</span>
             </button>
 
             {/* Voice Read Aloud button */}
-            <button onClick={(e) => { e.stopPropagation(); speakNotice(`${t.title}. ${t.message}`); }}
+            <button onClick={(e) => { e.stopPropagation(); speakNotice(cur.title, cur.message); }}
               className={`p-2 rounded-xl border transition-all cursor-pointer ${
                 isSpeaking ? 'bg-command-accent/15 border-command-accent/40 text-command-accent shadow-[0_0_8px_rgba(59,130,246,0.25)]' 
                   : 'border-command-border/40 text-gray-400 hover:text-white hover:bg-white/5'}`}
@@ -563,7 +598,7 @@ export default function NoticesBanner() {
             <div className={`rounded-xl border p-4 text-sm leading-relaxed
               ${isCrazyMode ? 'bg-black/80 border-command-accent/25 text-green-300 font-mono' : 'bg-command-bg/50 border-command-border/40 text-gray-200'}`}>
               {isCrazyMode && <div className="text-[9px] text-command-accent mb-1.5 uppercase font-bold tracking-widest select-none">&gt; DECRYPTED_FEED [{lang === 'en' ? 'ENGLISH' : 'HINDI'}] //</div>}
-              <p className="text-xs sm:text-sm">{t.message}</p>
+              <p className="text-xs sm:text-sm"><TranslatedText text={cur.message} /></p>
               <div className="flex items-center justify-between mt-3 pt-2 border-t border-command-border/30 text-[10px] text-command-muted">
                 <span>{new Date(cur.timestamp).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</span>
                 <div className="flex gap-2">
@@ -619,13 +654,12 @@ export default function NoticesBanner() {
                       </span>
                       {/* Language toggle inside modal */}
                       <button onClick={toggleLang}
-                        className="flex items-center h-5 rounded-full border border-command-border/50 bg-command-bg/40 overflow-hidden cursor-pointer hover:border-command-accent/40">
-                        <span className={`px-1.5 text-[8px] font-black ${lang === 'en' ? 'bg-command-accent text-white' : 'text-gray-400'}`}>EN</span>
-                        <span className={`px-1.5 text-[8px] font-black ${lang === 'hi' ? 'bg-command-accent text-white' : 'text-gray-400'}`}>हि</span>
+                        className="flex items-center h-5 rounded border border-command-border/50 bg-command-bg/40 px-2 cursor-pointer hover:border-command-accent/40 text-[8px] font-black text-white">
+                        <span>{lang.toUpperCase()}</span>
                       </button>
 
                       {/* Voice Read Aloud inside modal */}
-                      <button onClick={() => speakNotice(`${selT.title}. ${selT.message}`)}
+                      <button onClick={() => speakNotice(selectedNotice.title, selectedNotice.message)}
                         className={`flex items-center justify-center h-5 w-5 rounded-full border cursor-pointer hover:border-command-accent/40 ${
                           isSpeaking ? 'bg-command-accent/15 border-command-accent/30 text-command-accent' : 'border-command-border/50 bg-command-bg/40 text-gray-400 hover:text-white'}`}
                         title={isSpeaking ? 'Stop Listening' : 'Listen'}>
@@ -642,7 +676,7 @@ export default function NoticesBanner() {
                         )}
                       </button>
                     </div>
-                    <h3 className="text-lg font-extrabold text-white mt-1.5 uppercase tracking-tight">{selT.title}</h3>
+                    <h3 className="text-lg font-extrabold text-white mt-1.5 uppercase tracking-tight"><TranslatedText text={selectedNotice.title} /></h3>
                   </div>
                 </div>
                 <button onClick={() => { playSynthSound('click'); stopSpeaking(); setSelectedNotice(null); }}
@@ -656,7 +690,7 @@ export default function NoticesBanner() {
                   ${isCrazyMode ? 'bg-black/90 border-command-accent/25 text-green-300 font-mono shadow-[inset_0_0_10px_rgba(59,130,246,0.08)]' : 'bg-command-bg/40 border-command-border/40 text-gray-200'}`}>
                   {isCrazyMode && <div className="text-[9px] text-command-accent mb-2 uppercase font-bold tracking-widest select-none">&gt; FEED_DECRYPT [{lang === 'en' ? 'ENGLISH' : 'HINDI'}] //</div>}
                   <p className="whitespace-pre-line text-sm" key={`modal-${selectedNotice.id}-${lang}`}>
-                    <span className="lang-flip-enter inline-block">{selT.message}</span>
+                    <span className="lang-flip-enter inline-block"><TranslatedText text={selectedNotice.message} /></span>
                   </p>
                   {isCrazyMode && <div className="text-[9px] text-command-accent mt-3 uppercase font-bold tracking-widest select-none text-right">// END_FEED</div>}
                 </div>
@@ -700,17 +734,16 @@ export default function NoticesBanner() {
             <div className="flex items-center justify-between mb-5 border-b border-command-border/40 pb-3 shrink-0 relative z-20">
               <div>
                 <h3 className="text-lg font-black text-white uppercase tracking-tight">
-                  {lang === 'en' ? (isCrazyMode ? 'ACTIVE_SYSTEM_ALERTS' : 'All Active Notices') : (isCrazyMode ? 'सक्रिय_सिस्टम_अलर्ट' : 'सभी सक्रिय सूचनाएँ')}
+                  {lang === 'en' ? (isCrazyMode ? 'ACTIVE_SYSTEM_ALERTS' : 'All Active Notices') : lang === 'hi' ? (isCrazyMode ? 'सक्रिय_सिस्टम_अलर्ट' : 'सभी सक्रिय सूचनाएँ') : (isCrazyMode ? 'ಸಕ್ರಿಯ_ಸಿಸ್ಟಮ್_ಅಲರ್ಟ್‌ಗಳು' : 'ಎಲ್ಲಾ ಸಕ್ರಿಯ ಪ್ರಕಟಣೆಗಳು')}
                 </h3>
                 <p className="text-xs text-command-muted mt-0.5">
-                  {lang === 'en' ? 'Live traffic updates and official government circulars.' : 'लाइव ट्रैफ़िक अपडेट और आधिकारिक सरकारी सूचनाएँ।'}
+                  {lang === 'en' ? 'Live traffic updates and official government circulars.' : lang === 'hi' ? 'लाइव ट्रैफ़िक अपडेट और आधिकारिक सरकारी सूचनाएँ।' : 'ಲೈವ್ ದಟ್ಟಣೆ ನವೀಕರಣಗಳು ಮತ್ತು ಅಧಿಕೃತ ಸರ್ಕಾರಿ ಪ್ರಕಟಣೆಗಳು.'}
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 <button onClick={toggleLang}
-                  className="flex items-center h-6 rounded-full border border-command-border/50 bg-command-bg/40 overflow-hidden cursor-pointer hover:border-command-accent/40">
-                  <span className={`px-2 text-[9px] font-black ${lang === 'en' ? 'bg-command-accent text-white' : 'text-gray-400'}`}>EN</span>
-                  <span className={`px-2 text-[9px] font-black ${lang === 'hi' ? 'bg-command-accent text-white' : 'text-gray-400'}`}>हि</span>
+                  className="flex items-center h-6 rounded border border-command-border/50 bg-command-bg/40 px-2 cursor-pointer hover:border-command-accent/40 text-[9px] font-black text-white">
+                  <span>{lang.toUpperCase()}</span>
                 </button>
                 <button onClick={() => { playSynthSound('click'); setIsListViewOpen(false); }}
                   className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl cursor-pointer">
@@ -740,8 +773,8 @@ export default function NoticesBanner() {
                           <span className={`text-[8px] px-1.5 rounded border font-bold uppercase ${n.urgency === 'high' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>{n.urgency}</span>
                           <span className="text-[10px] text-command-muted">• {new Date(n.timestamp).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
-                        <h4 className="text-sm font-extrabold text-white mt-1">{nT.title}</h4>
-                        <p className={`text-xs sm:text-sm mt-1 leading-relaxed ${isCrazyMode ? 'text-green-300/90' : 'text-gray-300'}`}>{nT.message}</p>
+                        <h4 className="text-sm font-extrabold text-white mt-1"><TranslatedText text={n.title} /></h4>
+                        <p className={`text-xs sm:text-sm mt-1 leading-relaxed ${isCrazyMode ? 'text-green-300/90' : 'text-gray-300'}`}><TranslatedText text={n.message} /></p>
                       </div>
                     </div>
                     <div className="flex sm:flex-col justify-end gap-2 shrink-0 border-t sm:border-t-0 border-command-border/30 pt-2 sm:pt-0">

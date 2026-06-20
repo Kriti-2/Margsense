@@ -35,6 +35,7 @@ export const api = {
   ingestViolation: (data) => client.post('/ingest/violation', data),
   getChallans: (vehicleNumber) => client.get(`/public/challan-lookup/${vehicleNumber}`),
   chat: (data) => client.post('/chat/', data),
+  translate: (text, targetLang) => client.post('/public/translate', { text, target_lang: targetLang }),
 };
 
 export default client;

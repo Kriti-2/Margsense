@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ChatBot from '../components/ChatBot';
+import { useTranslation, LanguageSelector } from '../context/LanguageContext';
 
 export default function DashboardLayout({ children }) {
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -15,12 +17,12 @@ export default function DashboardLayout({ children }) {
   }
 
   const navLinks = [
-    { to: '/', label: 'Home', end: true },
-    { to: '/predict', label: 'Predict' },
-    { to: '/analytics', label: 'Analytics' },
-    { to: '/shift-planner', label: 'Shift Planner' },
-    { to: '/monitor', label: 'Monitor' },
-    { to: '/about', label: 'About' },
+    { to: '/', key: 'home', end: true },
+    { to: '/predict', key: 'predict' },
+    { to: '/analytics', key: 'analytics' },
+    { to: '/shift-planner', key: 'shiftPlanner' },
+    { to: '/monitor', key: 'monitor' },
+    { to: '/about', key: 'about' },
   ];
 
   return (
@@ -36,8 +38,8 @@ export default function DashboardLayout({ children }) {
               P
             </div>
             <div className="leading-tight">
-              <div className="text-[15px] font-bold text-gray-900 dark:text-white">ParkSense</div>
-              <div className="text-[10px] text-gray-400 dark:text-gray-500 font-medium hidden sm:block">Making Invisible Congestion Visible.</div>
+              <div className="text-[15px] font-bold text-gray-900 dark:text-white">{t('appTitle')}</div>
+              <div className="text-[10px] text-gray-400 dark:text-gray-500 font-medium hidden sm:block">{t('tagline')}</div>
             </div>
           </div>
 
@@ -58,7 +60,7 @@ export default function DashboardLayout({ children }) {
               >
                 {({ isActive }) => (
                   <>
-                    {link.label}
+                    {t(link.key)}
                     {isActive && (
                       <span className="absolute bottom-0 left-3.5 right-3.5 h-0.5 bg-[#BA5A5A] rounded-full" />
                     )}
@@ -73,9 +75,11 @@ export default function DashboardLayout({ children }) {
             {/* Live Feed */}
             <span className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
               <span className="h-2 w-2 rounded-full bg-[#BA5A5A] animate-pulse" />
-              Live Feed
+              {t('liveFeed')}
             </span>
 
+            <div className="h-4 w-px bg-gray-200 dark:bg-white/10" />
+            <LanguageSelector />
             <div className="h-4 w-px bg-gray-200 dark:bg-white/10" />
 
             {/* Profile */}
@@ -106,7 +110,7 @@ export default function DashboardLayout({ children }) {
                     onClick={() => { setProfileOpen(false); handleLogout(); }}
                     className="w-full text-left px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors rounded-b-xl cursor-pointer"
                   >
-                    Sign out
+                    {t('signOut')}
                   </button>
                 </div>
               )}
@@ -131,7 +135,11 @@ export default function DashboardLayout({ children }) {
 
         {/* Mobile menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-100 dark:border-white/10 bg-white dark:bg-gray-950 px-4 py-3 space-y-1 animate-fadeIn">
+          <div className="md:hidden border-t border-gray-100 dark:border-white/10 bg-white dark:bg-gray-950 px-4 py-3 space-y-1 animate-fadeIn flex flex-col gap-2">
+            <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-white/10">
+              <span className="text-xs font-bold text-gray-500 uppercase">{t('officer')}</span>
+              <LanguageSelector />
+            </div>
             {navLinks.map((link) => (
               <NavLink
                 key={link.to}
@@ -146,7 +154,7 @@ export default function DashboardLayout({ children }) {
                   }`
                 }
               >
-                {link.label}
+                {t(link.key)}
               </NavLink>
             ))}
             <div className="pt-2 border-t border-gray-100 dark:border-white/10 flex justify-end">
@@ -155,7 +163,7 @@ export default function DashboardLayout({ children }) {
                 onClick={handleLogout}
                 className="text-sm font-semibold text-red-500 hover:text-red-600 cursor-pointer"
               >
-                Sign out
+                {t('signOut')}
               </button>
             </div>
           </div>

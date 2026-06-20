@@ -4,6 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import { api } from '../api/client';
 import { useLiveFeed } from '../hooks/useLiveFeed';
 import TiltCard from '../components/TiltCard';
+import { useTranslation, TranslatedText } from '../context/LanguageContext';
 
 const BENGALURU_CENTER = [12.9716, 77.5946];
 const ADVISORY_COLORS = { red: '#C27A7A', orange: '#D29C42', green: '#486E5D' };
@@ -108,6 +109,7 @@ function CarbonTree({ savings }) {
 }
 
 export default function UserCongestion() {
+  const { t } = useTranslation();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -211,7 +213,7 @@ export default function UserCongestion() {
   };
 
   if (loading) {
-    return <div className="text-center text-gray-500 py-12">Loading congestion data...</div>;
+    return <div className="text-center text-gray-500 py-12"><TranslatedText text="Loading congestion data..." /></div>;
   }
 
   const zones = data?.zones || [];
@@ -225,8 +227,8 @@ export default function UserCongestion() {
         <TiltCard className="rounded-xl border border-command-border bg-command-panel p-4 flex items-center gap-4 interactive-card shadow-sm">
           <ComplianceRing score={Math.min(100, Math.round(totalSavings * 20))} />
           <div className="text-left">
-            <h4 className="text-sm font-bold text-white uppercase tracking-wider">Compliance Ring</h4>
-            <p className="text-[10px] text-command-muted mt-0.5 leading-relaxed">Ratio of eco-smart commute selections</p>
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider"><TranslatedText text="Compliance Ring" /></h4>
+            <p className="text-[10px] text-command-muted mt-0.5 leading-relaxed"><TranslatedText text="Ratio of eco-smart commute selections" /></p>
           </div>
         </TiltCard>
 
@@ -235,35 +237,35 @@ export default function UserCongestion() {
           <div className="flex items-center gap-4">
             <CarbonTree savings={totalSavings} />
             <div className="text-left">
-              <h4 className="text-sm font-bold text-white uppercase tracking-wider">Smart Carbon Tree</h4>
-              <p className="text-[10px] text-command-muted mt-0.5 leading-relaxed">Grows new leaves as you save CO₂</p>
+              <h4 className="text-sm font-bold text-white uppercase tracking-wider"><TranslatedText text="Smart Carbon Tree" /></h4>
+              <p className="text-[10px] text-command-muted mt-0.5 leading-relaxed"><TranslatedText text="Grows new leaves as you save CO₂" /></p>
             </div>
           </div>
           <span className="text-[8px] bg-command-success text-white px-2 py-0.5 rounded font-bold uppercase tracking-wider shrink-0">
-            {totalSavings >= 3.0 ? 'Blooming 🌸' : 'Growing 🌱'}
+            {totalSavings >= 3.0 ? <TranslatedText text="Blooming 🌸" /> : <TranslatedText text="Growing 🌱" />}
           </span>
         </TiltCard>
 
         {/* Card 3: Total Impact offsets */}
         <TiltCard className="rounded-xl border border-command-border bg-command-panel p-4 flex flex-col justify-between interactive-card shadow-sm min-h-[90px] text-left">
           <div className="flex justify-between items-center text-xs">
-            <span className="text-command-muted font-bold uppercase tracking-wider text-[9px]">Cumulative Impact</span>
+            <span className="text-command-muted font-bold uppercase tracking-wider text-[9px]"><TranslatedText text="Cumulative Impact" /></span>
             <span className="text-[9px] bg-command-accent/10 border border-command-accent/30 text-command-accent px-1.5 py-0.5 rounded font-bold uppercase shrink-0">
-              {totalSavings >= 3.0 ? '🌿 Eco Champion' : '🌱 Green Driver'}
+              {totalSavings >= 3.0 ? <TranslatedText text="🌿 Eco Champion" /> : <TranslatedText text="🌱 Green Driver" />}
             </span>
           </div>
           <div className="grid grid-cols-3 gap-1 mt-2 text-center text-[10px] font-bold text-gray-800 leading-tight">
             <div className="bg-command-bg/40 p-1.5 rounded border border-command-border/30">
               <span className="block text-command-success text-sm font-extrabold">{totalSavings}kg</span>
-              <span className="text-[8px] text-gray-500 font-semibold uppercase">CO₂ Offset</span>
+              <span className="text-[8px] text-gray-500 font-semibold uppercase"><TranslatedText text="CO₂ Offset" /></span>
             </div>
             <div className="bg-command-bg/40 p-1.5 rounded border border-command-border/30">
               <span className="block text-command-success text-sm font-extrabold">{totalFuelSaved}L</span>
-              <span className="text-[8px] text-gray-500 font-semibold uppercase">Fuel Saved</span>
+              <span className="text-[8px] text-gray-500 font-semibold uppercase"><TranslatedText text="Fuel Saved" /></span>
             </div>
             <div className="bg-command-bg/40 p-1.5 rounded border border-command-border/30">
               <span className="block text-command-success text-sm font-extrabold">{totalTimeSaved}m</span>
-              <span className="text-[8px] text-gray-500 font-semibold uppercase">Time Saved</span>
+              <span className="text-[8px] text-gray-500 font-semibold uppercase"><TranslatedText text="Time Saved" /></span>
             </div>
           </div>
         </TiltCard>
@@ -308,11 +310,11 @@ export default function UserCongestion() {
                   }}
                 >
                   <Popup>
-                    <strong>{zone.zone}</strong>
+                    <strong>{t(zone.zone)}</strong>
                     <br />
-                    {zone.advisory} — {zone.speed_drop_pct}% slower
+                    <TranslatedText text={zone.advisory} /> — {zone.speed_drop_pct}% <TranslatedText text="slower" />
                     <br />
-                    {zone.tip}
+                    <TranslatedText text={zone.tip} />
                   </Popup>
                 </CircleMarker>
               ))}
@@ -324,13 +326,13 @@ export default function UserCongestion() {
                     positions={calculatedRoutes.standard} 
                     pathOptions={{ color: '#C27A7A', weight: 5, opacity: 0.8 }}
                   >
-                    <Popup>Standard Route (More delay)</Popup>
+                    <Popup><TranslatedText text="Standard Route (More delay)" /></Popup>
                   </Polyline>
                   <Polyline 
                     positions={calculatedRoutes.eco} 
                     pathOptions={{ color: '#486E5D', weight: 6, opacity: 0.95, dashArray: '10, 10' }}
                   >
-                    <Popup>Eco-Smart Route (Fluid & fuel-efficient)</Popup>
+                    <Popup><TranslatedText text="Eco-Smart Route (Fluid & fuel-efficient)" /></Popup>
                   </Polyline>
                   <FitRouteBounds route={calculatedRoutes.eco} />
                 </>
@@ -341,11 +343,11 @@ export default function UserCongestion() {
               <div className="absolute bottom-4 left-4 z-[400] bg-white/95 border border-command-border/50 p-2.5 rounded-lg shadow-md flex gap-4 text-[10px] font-bold uppercase tracking-wider text-gray-800">
                 <div className="flex items-center gap-1.5">
                   <span className="h-3 w-6 inline-block bg-[#C27A7A] rounded" />
-                  <span>Standard</span>
+                  <span><TranslatedText text="Standard" /></span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="h-3 w-6 inline-block bg-[#486E5D] border-dashed border border-white rounded" />
-                  <span>Eco-Smart</span>
+                  <span><TranslatedText text="Eco-Smart" /></span>
                 </div>
               </div>
             )}
@@ -353,38 +355,39 @@ export default function UserCongestion() {
         </div>
 
         {/* Controls, Impact Stats & Advisories Column */}
+        {/* Controls, Impact Stats & Advisories Column */}
         <div className="space-y-6">
           {/* Trip Planner Control Card */}
           <TiltCard className="rounded-xl border border-command-border bg-command-panel p-5 shadow-sm space-y-4">
             <div className="flex items-center gap-2 text-left">
               <span className="text-lg">🧭</span>
               <div>
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">Eco-Smart Trip Planner</h3>
-                <p className="text-[10px] text-command-muted font-medium">Bypass congested gridlock and reduce CO2 emissions automatically</p>
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider"><TranslatedText text="Eco-Smart Trip Planner" /></h3>
+                <p className="text-[10px] text-command-muted font-medium"><TranslatedText text="Bypass congested gridlock and reduce CO2 emissions automatically" /></p>
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
               <div>
-                <label className="text-[10px] font-bold text-command-muted uppercase tracking-wider block mb-1">Start Hub</label>
+                <label className="text-[10px] font-bold text-command-muted uppercase tracking-wider block mb-1"><TranslatedText text="Start Hub" /></label>
                 <select 
                   value={origin} 
                   onChange={(e) => setOrigin(e.target.value)}
                   className="w-full bg-command-bg border border-command-border rounded-lg px-3 py-2 text-xs text-gray-800 focus:outline-none cursor-pointer"
                 >
                   {LOCATIONS.map(l => (
-                    <option key={l.name} value={l.name}>{l.name}</option>
+                    <option key={l.name} value={l.name}>{t(l.name)}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-bold text-command-muted uppercase tracking-wider block mb-1">End Destination</label>
+                <label className="text-[10px] font-bold text-command-muted uppercase tracking-wider block mb-1"><TranslatedText text="End Destination" /></label>
                 <select 
                   value={destination} 
                   onChange={(e) => setDestination(e.target.value)}
                   className="w-full bg-command-bg border border-command-border rounded-lg px-3 py-2 text-xs text-gray-800 focus:outline-none cursor-pointer"
                 >
                   {LOCATIONS.filter(l => l.name !== origin).map(l => (
-                    <option key={l.name} value={l.name}>{l.name}</option>
+                    <option key={l.name} value={l.name}>{t(l.name)}</option>
                   ))}
                 </select>
               </div>
@@ -393,29 +396,29 @@ export default function UserCongestion() {
               onClick={handleCalculateRoute}
               className="w-full rounded-xl bg-command-accent text-white py-2.5 text-xs font-semibold hover:opacity-95 active:scale-95 transition-all shadow-md shadow-command-accent/20 cursor-pointer"
             >
-              Calculate Route Options
+              <TranslatedText text="Calculate Route Options" />
             </button>
           </TiltCard>
           {routeDetails && (
             <div className="rounded-xl border border-command-success/30 bg-command-success/5 p-5 shadow-sm space-y-4 animate-slideIn">
               <div className="flex items-center justify-between border-b border-command-success/20 pb-3 text-left">
-                <h3 className="text-xs font-bold text-command-success uppercase tracking-wider">🌱 Eco-Smart Impact</h3>
-                <span className="text-[9px] bg-command-success text-white px-2 py-0.5 rounded font-bold uppercase tracking-wider">Optimal</span>
+                <h3 className="text-xs font-bold text-command-success uppercase tracking-wider"><TranslatedText text="🌱 Eco-Smart Impact" /></h3>
+                <span className="text-[9px] bg-command-success text-white px-2 py-0.5 rounded font-bold uppercase tracking-wider"><TranslatedText text="Optimal" /></span>
               </div>
               
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div className="bg-white border border-command-border/40 p-2 rounded-lg">
-                  <p className="text-[9px] font-bold text-command-muted uppercase tracking-wider">Time Saved</p>
+                  <p className="text-[9px] font-bold text-command-muted uppercase tracking-wider"><TranslatedText text="Time Saved" /></p>
                   <p className="text-base font-extrabold text-command-success mt-0.5">{routeDetails.timeSaved}m</p>
                   <p className="text-[8px] text-gray-400 font-bold">-{routeDetails.timePct}%</p>
                 </div>
                 <div className="bg-white border border-command-border/40 p-2 rounded-lg">
-                  <p className="text-[9px] font-bold text-command-muted uppercase tracking-wider">CO2 Saved</p>
+                  <p className="text-[9px] font-bold text-command-muted uppercase tracking-wider"><TranslatedText text="CO2 Saved" /></p>
                   <p className="text-base font-extrabold text-command-success mt-0.5">{routeDetails.co2Saved}kg</p>
                   <p className="text-[8px] text-gray-400 font-bold">-{routeDetails.co2Pct}%</p>
                 </div>
                 <div className="bg-white border border-command-border/40 p-2 rounded-lg">
-                  <p className="text-[9px] font-bold text-command-muted uppercase tracking-wider">Fuel Saved</p>
+                  <p className="text-[9px] font-bold text-command-muted uppercase tracking-wider"><TranslatedText text="Fuel Saved" /></p>
                   <p className="text-base font-extrabold text-command-success mt-0.5">{routeDetails.fuelSaved}L</p>
                   <p className="text-[8px] text-gray-400 font-bold">-{routeDetails.fuelPct}%</p>
                 </div>
@@ -423,22 +426,22 @@ export default function UserCongestion() {
               
               <div className="text-xs space-y-2 text-gray-700 bg-white/50 p-3 rounded-lg border border-command-border/20 text-left">
                 <div className="flex justify-between">
-                  <span className="text-command-muted font-medium">Eco Route:</span>
+                  <span className="text-command-muted font-medium"><TranslatedText text="Eco Route:" /></span>
                   <span className="font-semibold text-gray-800">{routeDetails.ecoDist} km · {routeDetails.ecoTime}m</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-command-muted font-medium">Standard Route:</span>
+                  <span className="text-command-muted font-medium"><TranslatedText text="Standard Route:" /></span>
                   <span className="font-semibold text-gray-800">{routeDetails.stdDist} km · {routeDetails.stdTime}m</span>
                 </div>
                 <p className="text-[9px] text-command-accent bg-command-accent/5 p-2 rounded border border-command-accent/15 mt-2 font-medium leading-relaxed text-left">
-                  💡 **Bypass Notice:** Standard path triggers extra start-stop idling. The eco route bypasses the main intersection, conserving fuel.
+                  💡 **<TranslatedText text="Bypass Notice" />:** <TranslatedText text="Standard path triggers extra start-stop idling. The eco route bypasses the main intersection, conserving fuel." />
                 </p>
               </div>
             </div>
           )}
 
           <div className="space-y-3 text-left">
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider">Zone Advisories</h2>
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider"><TranslatedText text="Zone Advisories" /></h2>
             {zones.map((zone) => (
               <div
                 key={zone.zone}
@@ -453,14 +456,14 @@ export default function UserCongestion() {
                         color: ADVISORY_COLORS[zone.color],
                       }}
                     >
-                      {zone.advisory}
+                      <TranslatedText text={zone.advisory} />
                     </span>
-                    <span className="font-semibold text-gray-800 text-sm">{zone.zone}</span>
+                    <span className="font-semibold text-gray-800 text-sm">{t(zone.zone)}</span>
                   </div>
-                  <p className="mt-2 text-xs text-gray-600 leading-relaxed">{zone.tip}</p>
+                  <p className="mt-2 text-xs text-gray-600 leading-relaxed"><TranslatedText text={zone.tip} /></p>
                   <p className="mt-1 text-[10px] text-gray-500">
-                    Speed: {zone.current_speed_kmh} km/h (normally {zone.baseline_speed_kmh}) ·{' '}
-                    {zone.parking_violations_24h} violations (24h)
+                    <TranslatedText text="Speed" />: {zone.current_speed_kmh} km/h (<TranslatedText text="normally" /> {zone.baseline_speed_kmh}) ·{' '}
+                    {zone.parking_violations_24h} <TranslatedText text="violations (24h)" />
                   </p>
                 </div>
               </div>

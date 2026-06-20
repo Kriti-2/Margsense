@@ -217,3 +217,63 @@ def challan_lookup(vehicle_number: str, user: User = Depends(require_user)):
         "rating_color": rating_color,
         "violations": matching_violations
     }
+
+
+from pydantic import BaseModel
+
+class TranslationRequest(BaseModel):
+    text: str
+    target_lang: str
+
+@router.post("/translate")
+async def translate_text(payload: TranslationRequest):
+    """
+    Translate text to Hindi or Kannada using Gemini API.
+    """
+    target = payload.target_lang.strip().lower()
+    text = payload.text.strip()
+    
+    if not text or target == "en":
+        return {"translated_text": text}
+        
+    lang_name = "Hindi" if target == "hi" else "Kannada" if target == "kn" else None
+    if not lang_name:
+        return {"translated_text": text}
+        
+    from app.config import get_settings
+    try:
+        from google import genai
+    except ImportError:
+        return {"translated_text": text}
+        
+    settings = get_settings()
+    if not settings.gemini_api_key:
+        return {"translated_text": text}
+        
+    from app.routes.chat import get_genai_client
+    try:
+        client = get_genai_client(settings.gemini_api_key)
+        prompt = (
+            f"Translate the following Bengaluru traffic/parking dashboard text to {lang_name}. "
+            "Maintain any emojis, numbers, and keep proper Bengaluru area names (like 'Silk Board', "
+            "'Koramangala', 'Indiranagar', 'MG Road') and agency names (like 'BBMP', 'BTP', 'BMRCL') "
+            "accurate and standard. Do not translate proper technical abbreviations. "
+            "Provide a high-quality, professional translation with absolutely zero grammar or spelling errors.\n\n"
+            f"Text to translate: \"{text}\"\n\n"
+            "Only output the translated text. Do not include quotes, markdown formatting, explanations, or backticks."
+        )
+        response = await client.aio.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+        )
+        translated = response.text.strip()
+        if translated.startswith('"') and translated.endswith('"'):
+            translated = translated[1:-1].strip()
+        elif translated.startswith("'") and translated.endswith("'"):
+            translated = translated[1:-1].strip()
+        return {"translated_text": translated}
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Error in translate endpoint: {e}")
+        return {"translated_text": text}
+

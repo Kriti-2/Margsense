@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { LanguageProvider } from './context/LanguageContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import DashboardLayout from './layouts/DashboardLayout';
 import Homepage from './pages/Homepage';
@@ -66,37 +67,39 @@ function AboutRoute() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+    <LanguageProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
-          <Route element={<ProtectedRoute />}>
-            <Route path="/" element={<HomepageRoute />} />
-            <Route path="/about" element={<AboutRoute />} />
-            <Route path="/corridors" element={<CorridorsRoute />} />
-          </Route>
-
-          <Route element={<ProtectedRoute userOnly />}>
-            <Route element={<UserLayout />}>
-              <Route path="/congestion" element={<UserCongestion />} />
-              <Route path="/reporter" element={<LiveViolationReporter />} />
+            <Route element={<ProtectedRoute />}>
+              <Route path="/" element={<HomepageRoute />} />
+              <Route path="/about" element={<AboutRoute />} />
+              <Route path="/corridors" element={<CorridorsRoute />} />
             </Route>
-          </Route>
 
-          <Route element={<ProtectedRoute officerOnly />}>
-            <Route element={<DashboardLayout />}>
-              <Route path="/predict" element={<Predict />} />
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/shift-planner" element={<ShiftPlanner />} />
-              <Route path="/monitor" element={<CameraMonitor />} />
+            <Route element={<ProtectedRoute userOnly />}>
+              <Route element={<UserLayout />}>
+                <Route path="/congestion" element={<UserCongestion />} />
+                <Route path="/reporter" element={<LiveViolationReporter />} />
+              </Route>
             </Route>
-          </Route>
 
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+            <Route element={<ProtectedRoute officerOnly />}>
+              <Route element={<DashboardLayout />}>
+                <Route path="/predict" element={<Predict />} />
+                <Route path="/analytics" element={<Analytics />} />
+                <Route path="/shift-planner" element={<ShiftPlanner />} />
+                <Route path="/monitor" element={<CameraMonitor />} />
+              </Route>
+            </Route>
+
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }
