@@ -1,325 +1,276 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-const VIOLATION_TYPES = [
-  { id: 'double', label: '🚗 Double Parking', multiplier: 1.5, baseLoss: 12500, baseDelay: 15, co2PerUnit: 3.2 },
-  { id: 'noparking', label: '🚫 No Parking Zone', multiplier: 1.0, baseLoss: 6200, baseDelay: 8, co2PerUnit: 1.6 },
-  { id: 'sidewalk', label: '🚶 Sidewalk Obstruction', multiplier: 1.2, baseLoss: 8800, baseDelay: 10, co2PerUnit: 2.1 },
-];
+const CityscapeSVG = () => (
+  <img 
+    src="/ChatGPT Image Jun 20, 2026, 04_25_20 PM.png" 
+    alt="Bengaluru Cityscape" 
+    className="w-full h-[145px] lg:h-[175px] object-contain object-right mix-blend-multiply" 
+  />
+);
 
-const ZONES = [
-  { name: 'Silk Board Junction', weight: 1.6, description: 'Heavy arterial bottleneck' },
-  { name: 'Indiranagar 100ft Rd', weight: 1.3, description: 'Dense commercial corridor' },
-  { name: 'Koramangala 80ft Rd', weight: 1.15, description: 'Tech hub & residential mix' },
-  { name: 'MG Road Metro Stn', weight: 1.4, description: 'Central business district' },
-];
+const BullseyeIcon = ({ className = "h-7 w-7 text-[#C26D6D]" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth={1.5} />
+    <circle cx="12" cy="12" r="6" stroke="currentColor" strokeWidth={1.5} />
+    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth={1.5} />
+    <circle cx="12" cy="12" r="0.8" fill="currentColor" />
+    <path d="M 3 3 L 10 10" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
+    <path d="M 10 7 L 10 10 L 7 10" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const DataIcon = ({ className = "h-4 w-4 text-[#C26D6D]" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" />
+  </svg>
+);
+
+const ClockIcon = ({ className = "h-4 w-4 text-[#C26D6D]" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const ShieldIcon = ({ className = "h-4 w-4 text-[#C26D6D]" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+  </svg>
+);
+
+const UsersIcon = ({ className = "h-4 w-4 text-[#C26D6D]" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+  </svg>
+);
+
+const CapIcon = ({ className = "h-4.5 w-4.5 text-[#489C6F]" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M 4 10 L 20 10 L 21 12.5 L 3 12.5 Z" />
+    <path d="M 5.5 10 C 5.5 6 18.5 6 18.5 10" stroke="currentColor" strokeWidth={2.5} />
+    <circle cx="12" cy="11.2" r="1.2" fill="currentColor" />
+  </svg>
+);
+
+const SmileyIcon = ({ className = "h-4 w-4 text-[#C26D6D]" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const MapPinIcon = ({ className = "h-4 w-4 text-[#489C6F]" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+  </svg>
+);
+
+const TrendingUpIcon = ({ className = "h-4 w-4 text-[#489C6F]" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+  </svg>
+);
+
+const DatabaseIcon = ({ className = "h-4 w-4 text-[#489C6F]" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+  </svg>
+);
 
 export default function About() {
-  // Simulator States
-  const [violationType, setViolationType] = useState('double');
-  const [vehicleCount, setVehicleCount] = useState(3);
-  const [selectedZone, setSelectedZone] = useState('Silk Board Junction');
-  const [isSimulating, setIsSimulating] = useState(false);
-  const [simResults, setSimResults] = useState(null);
-
-  const handleSimulate = (e) => {
-    e.preventDefault();
-    setIsSimulating(true);
-    setSimResults(null);
-
-    // Simulate AI model calculation lag
-    setTimeout(() => {
-      const typeConfig = VIOLATION_TYPES.find((v) => v.id === violationType);
-      const zoneConfig = ZONES.find((z) => z.name === selectedZone);
-      
-      const economicLoss = Math.round(
-        vehicleCount * typeConfig.baseLoss * zoneConfig.weight
-      );
-      const avgDelayMins = Math.round(
-        vehicleCount * typeConfig.baseDelay * zoneConfig.weight
-      );
-      const co2Kg = parseFloat(
-        (vehicleCount * typeConfig.co2PerUnit * zoneConfig.weight).toFixed(1)
-      );
-      const riskScore = Math.min(
-        100,
-        Math.round(vehicleCount * 18 * typeConfig.multiplier * zoneConfig.weight)
-      );
-
-      // Determine recommended dispatch action
-      let dispatchAction = 'Issue auto-spot penalty loops';
-      if (riskScore >= 75) {
-        dispatchAction = 'Dispatch 2 Towing Escort Units + Clamping Patrol';
-      } else if (riskScore >= 45) {
-        dispatchAction = 'Assign 1 Patrol Officer for obstruction clearance';
-      }
-
-      setSimResults({
-        economicLoss,
-        avgDelayMins,
-        co2Kg,
-        riskScore,
-        dispatchAction,
-      });
-      setIsSimulating(false);
-    }, 1000);
-  };
-
   return (
-    <div className="space-y-8 max-w-4xl mx-auto animate-fadeIn pb-12">
-      {/* Page Header */}
-      <div className="flex flex-col gap-3 border-b border-gray-150 dark:border-white/10 pb-6 text-left">
-        <div className="flex items-center gap-2">
-          <span className="rounded-full bg-[#F9EDED] dark:bg-[#BA5A5A]/10 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-[#BA5A5A]">
-            Platform Overview
-          </span>
-          <span className="h-1.5 w-1.5 rounded-full bg-gray-300 dark:bg-gray-600" />
-          <span className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider">v2.4 Live</span>
-        </div>
-
-        <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-gray-900 dark:text-white leading-tight">
-          About <span className="bg-gradient-to-r from-[#BA5A5A] to-[#A04848] bg-clip-text text-transparent">ParkSense AI</span>
-        </h2>
-
-        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 max-w-2xl leading-relaxed">
-          The next-generation, AI-driven parking congestion intelligence platform for Bengaluru. 
-          Enabling traffic command centers and citizens to predict congestion, detect violations, and optimize mobility in real-time.
-        </p>
-      </div>
-
-      {/* Main Mission & Structure Panel */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-950 p-6 md:p-8 shadow-md space-y-6">
-        <section className="space-y-3">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <span>🎯</span> Our Mission
-          </h3>
-          <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-            Bengaluru loses crores daily to traffic congestion caused by illegal, double, or wrong-side parking. 
-            <strong> ParkSense AI</strong> was designed to transition city parking enforcement from reactive complaint-handling 
-            to proactive intelligence-led operations. We analyze historical data, live sensor streams, and CCTV feeds 
-            to calculate where violations will occur next, their exact economic costs, and where to deploy enforcement officers.
-          </p>
-        </section>
-
-        <hr className="border-gray-150 dark:border-white/10" />
-
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-3">
-            <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <span>🚗</span> For Citizens
-            </h3>
-            <ul className="text-xs text-gray-700 dark:text-gray-300 space-y-2.5 list-disc list-inside leading-relaxed">
-              <li><strong>Trip Planner:</strong> Check live zone speeds, delay indexes, and predicted parking congestion scores before leaving.</li>
-              <li><strong>Live Violation Reporter:</strong> Submit parking violation reports with vehicle photos and locations. Connected via WebSockets for real-time dispatch.</li>
-              <li><strong>Green Corridors:</strong> Safe zones and priority alerts keeping emergency lanes clear for ambulances.</li>
-            </ul>
+    <div className="flex flex-col justify-between h-[calc(100vh-115px)] gap-4 lg:gap-6 text-left px-4 md:px-8 py-1.5 bg-[#F5F6F8]">
+      
+      {/* ── Header Section ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+        {/* Left text controls */}
+        <div className="lg:col-span-7 space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="rounded-full bg-[#FDF2F0] px-2 py-0.5 text-[8.5px] font-black uppercase tracking-wider text-[#BA5A5A]">
+              Platform Overview
+            </span>
+            <span className="h-1 w-1 rounded-full bg-gray-300" />
+            <span className="text-[8.5px] text-gray-400 font-bold uppercase tracking-wider">v2.4 Live</span>
           </div>
 
-          <div className="space-y-3">
-            <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <span>👮</span> For Officers & Administration
-            </h3>
-            <ul className="text-xs text-gray-700 dark:text-gray-300 space-y-2.5 list-disc list-inside leading-relaxed">
-              <li><strong>ParkPredict Engine:</strong> 24-hour Prophet-based forecast modeling congestion trends.</li>
-              <li><strong>Patrol Shift Planner:</strong> AI-driven optimal officer assignment schedules targeting high-probability violation hotspots.</li>
-              <li><strong>CCTV Monitor:</strong> Real-time automated street surveillance detecting double-parking and sidewalk violations instantly.</li>
-              <li><strong>Economic Impact Ledger:</strong> Quantifies fuel burned, emissions produced, and wage value lost per sector.</li>
-            </ul>
-          </div>
-        </section>
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 leading-tight" style={{ fontFamily: "'Inter', sans-serif" }}>
+            About <span className="text-[#BA5A5A]">ParkSense AI</span>
+          </h2>
 
-        <hr className="border-gray-150 dark:border-white/10" />
-
-        <section className="space-y-3">
-          <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <span>⚙️</span> Technology Stack
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {['FastAPI', 'React 19', 'Vite', 'Tailwind CSS', 'Prophet (Meta)', 'Pandas & NumPy', 'Leaflet Engine', 'WebSockets'].map((tech) => (
-              <span key={tech} className="rounded-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 px-3 py-1 text-xs font-semibold text-gray-700 dark:text-gray-300">
-                {tech}
-              </span>
-            ))}
-          </div>
-        </section>
-      </div>
-
-      {/* ── Interactive Playground Section ── */}
-      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-950 p-6 md:p-8 shadow-md space-y-6">
-        <div>
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <span>🎮</span> Congestion Impact Sandbox
-          </h3>
-          <p className="text-xs text-gray-500 mt-1">
-            Simulate the cascading civic and economic impact of parking violations in real-time.
+          <p className="text-xs sm:text-[13px] text-gray-500 font-medium leading-relaxed max-w-2xl" style={{ fontFamily: "'Inter', sans-serif" }}>
+            The next-generation, AI-driven parking congestion intelligence platform for Bengaluru. 
+            Enabling traffic command centers and citizens to predict congestion, detect violations, and optimize mobility in real-time.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-          {/* Controls form (5 columns) */}
-          <form onSubmit={handleSimulate} className="lg:col-span-5 space-y-4 flex flex-col justify-between text-left">
-            <div className="space-y-4">
-              <div>
-                <label className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1">
-                  Violation Location
-                </label>
-                <select
-                  value={selectedZone}
-                  onChange={(e) => setSelectedZone(e.target.value)}
-                  className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs text-gray-700 dark:text-gray-200 focus:outline-none focus:border-[#BA5A5A]"
-                >
-                  {ZONES.map((z) => (
-                    <option key={z.name} value={z.name}>
-                      {z.name} ({z.weight}x scale)
-                    </option>
-                  ))}
-                </select>
-              </div>
+        {/* Right cityscape graphic */}
+        <div className="lg:col-span-5 w-full flex justify-start lg:pl-10">
+          <div className="max-w-[480px] lg:max-w-[520px] w-full lg:-ml-12">
+            <CityscapeSVG />
+          </div>
+        </div>
+      </div>
 
-              <div>
-                <label className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1">
-                  Violation Category
-                </label>
-                <div className="space-y-1.5">
-                  {VIOLATION_TYPES.map((v) => (
-                    <label
-                      key={v.id}
-                      className={`flex items-center justify-between rounded-lg border px-3 py-2 text-xs cursor-pointer transition-colors ${
-                        violationType === v.id
-                          ? 'border-[#BA5A5A] bg-[#F9EDED] dark:bg-[#BA5A5A]/10 text-[#BA5A5A]'
-                          : 'border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300'
-                      }`}
-                    >
-                      <span className="font-semibold">{v.label}</span>
-                      <input
-                        type="radio"
-                        name="violationType"
-                        value={v.id}
-                        checked={violationType === v.id}
-                        onChange={() => setViolationType(v.id)}
-                        className="hidden"
-                      />
-                    </label>
-                  ))}
-                </div>
-              </div>
+      {/* ── Middle Mission & Values Section ── */}
+      <div className="bg-white border border-gray-100 rounded-xl p-3 shadow-sm grid grid-cols-1 lg:grid-cols-2 gap-4 items-center">
+        {/* Left Side: Our Mission */}
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FDF2F0]">
+            <BullseyeIcon className="h-6 w-6 text-[#C26D6D]" />
+          </div>
+          <div>
+            <h3 className="text-xs font-bold text-gray-900 mb-0.5" style={{ fontFamily: "'Inter', sans-serif" }}>Our Mission</h3>
+            <p className="text-[9.5px] text-gray-500 leading-normal font-medium mb-1">
+              Bengaluru loses crores daily to illegal parking. <strong className="text-gray-900 font-semibold">ParkSense AI</strong> transitions city parking enforcement from reactive complaint-handling to proactive intelligence-led operations.
+            </p>
+            <p className="text-[9.5px] text-gray-500 leading-normal font-medium">
+              We analyze historical and live CCTV streams to calculate violation costs and optimize patrol officer deployment.
+            </p>
+          </div>
+        </div>
 
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                    Number of Vehicles
-                  </label>
-                  <span className="text-xs font-black text-[#BA5A5A]">{vehicleCount} Vehicles</span>
-                </div>
-                <input
-                  type="range"
-                  min="1"
-                  max="10"
-                  value={vehicleCount}
-                  onChange={(e) => setVehicleCount(parseInt(e.target.value))}
-                  className="h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-gray-100 dark:bg-gray-800 accent-[#BA5A5A]"
-                />
-              </div>
+        {/* Right Side: 4 Value Cards */}
+        <div className="lg:border-l lg:border-gray-100 lg:pl-4 grid grid-cols-2 gap-3">
+          {/* Data-Driven */}
+          <div className="flex gap-2">
+            <div className="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-lg bg-[#FDF2F0]">
+              <DataIcon className="h-4.5 w-4.5 text-[#C26D6D]" />
             </div>
+            <div>
+              <h4 className="text-[10px] font-bold text-gray-900" style={{ fontFamily: "'Inter', sans-serif" }}>Data-Driven</h4>
+              <p className="text-[9px] text-gray-400 font-medium leading-tight mt-0.5">
+                AI/ML models trained on real world traffic & violation data.
+              </p>
+            </div>
+          </div>
 
-            <button
-              type="submit"
-              disabled={isSimulating}
-              className="w-full mt-4 rounded-xl bg-[#BA5A5A] text-white py-2.5 text-xs font-semibold hover:bg-[#A04848] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shadow-[#BA5A5A]/10 cursor-pointer"
-            >
-              {isSimulating ? 'Processing Models...' : 'Calculate Simulated Impact'}
-            </button>
-          </form>
+          {/* Real-Time Intelligence */}
+          <div className="flex gap-2">
+            <div className="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-lg bg-[#FDF2F0]">
+              <ClockIcon className="h-4.5 w-4.5 text-[#C26D6D]" />
+            </div>
+            <div>
+              <h4 className="text-[10px] font-bold text-gray-900" style={{ fontFamily: "'Inter', sans-serif" }}>Real-Time Intelligence</h4>
+              <p className="text-[9px] text-gray-400 font-medium leading-tight mt-0.5">
+                Live monitoring and instant insights for faster decisions.
+              </p>
+            </div>
+          </div>
 
-          {/* Results Display Panel (7 columns) */}
-          <div className="lg:col-span-7 rounded-xl border border-gray-150 dark:border-white/10 bg-gray-50/50 dark:bg-gray-900/20 p-5 flex flex-col justify-center items-center relative overflow-hidden min-h-[300px]">
-            {isSimulating ? (
-              <div className="text-center space-y-3">
-                <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-[#BA5A5A] border-t-transparent" />
-                <p className="text-xs text-gray-400 animate-pulse font-medium">Running Prophet congestion weights...</p>
+          {/* Proactive Enforcement */}
+          <div className="flex gap-2">
+            <div className="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-lg bg-[#FDF2F0]">
+              <ShieldIcon className="h-4.5 w-4.5 text-[#C26D6D]" />
+            </div>
+            <div>
+              <h4 className="text-[10px] font-bold text-gray-900" style={{ fontFamily: "'Inter', sans-serif" }}>Proactive Enforcement</h4>
+              <p className="text-[9px] text-gray-400 font-medium leading-tight mt-0.5">
+                Predict, prevent and reduce congestion before it happens.
+              </p>
+            </div>
+          </div>
+
+          {/* Built for Bengaluru */}
+          <div className="flex gap-2">
+            <div className="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-lg bg-[#FDF2F0]">
+              <UsersIcon className="h-4.5 w-4.5 text-[#C26D6D]" />
+            </div>
+            <div>
+              <h4 className="text-[10px] font-bold text-gray-900" style={{ fontFamily: "'Inter', sans-serif" }}>Built for Bengaluru</h4>
+              <p className="text-[9px] text-gray-400 font-medium leading-tight mt-0.5">
+                Designed for the city's unique traffic patterns and challenges.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Bottom Section: Citizens vs Officers ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+        
+        {/* Left Side: For Citizens */}
+        <div className="bg-white border border-gray-100 rounded-xl shadow-sm flex flex-col justify-between overflow-hidden">
+          <div className="relative overflow-hidden p-3 min-h-[82px]">
+            <div className="max-w-[62%] flex items-start gap-3">
+              {/* Left Badge circle */}
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FDF2F0]">
+                <UsersIcon className="h-5.5 w-5.5 text-[#C26D6D]" />
               </div>
-            ) : simResults ? (
-              <div className="w-full space-y-4 animate-fadeIn text-left">
-                {/* Result header */}
-                <div className="flex justify-between items-center border-b border-gray-200 dark:border-white/10 pb-3">
-                  <span className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Simulation Results</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase">Risk Score</span>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-black ${
-                      simResults.riskScore >= 75
-                        ? 'bg-red-100 dark:bg-red-500/10 text-red-500'
-                        : simResults.riskScore >= 45
-                        ? 'bg-amber-100 dark:bg-amber-500/10 text-amber-500'
-                        : 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-500'
-                    }`}>
-                      {simResults.riskScore}%
-                    </span>
-                  </div>
-                </div>
-
-                {/* Grid stats */}
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 p-3 rounded-lg text-center shadow-sm">
-                    <span className="block text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase">Est. Loss</span>
-                    <span className="block text-sm sm:text-base font-extrabold text-[#BA5A5A] mt-1">
-                      ₹{simResults.economicLoss.toLocaleString('en-IN')}
-                    </span>
-                  </div>
-                  <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 p-3 rounded-lg text-center shadow-sm">
-                    <span className="block text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase">Avg Delay</span>
-                    <span className="block text-sm sm:text-base font-extrabold text-[#BA5A5A] mt-1">
-                      {simResults.avgDelayMins}m
-                    </span>
-                  </div>
-                  <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 p-3 rounded-lg text-center shadow-sm">
-                    <span className="block text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase">CO₂ Waste</span>
-                    <span className="block text-sm sm:text-base font-extrabold text-[#BA5A5A] mt-1">
-                      {simResults.co2Kg}kg
-                    </span>
-                  </div>
-                </div>
-
-                {/* Risk Progress Bar */}
-                <div className="space-y-1 pt-1.5">
-                  <div className="flex justify-between text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase">
-                    <span>Congestion Risk Level</span>
-                    <span>{simResults.riskScore >= 75 ? 'Critical Avoidance' : simResults.riskScore >= 45 ? 'Elevated Caution' : 'Clear / Flowing'}</span>
-                  </div>
-                  <div className="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
-                    <div
-                      className={`h-full transition-all duration-500 ${
-                        simResults.riskScore >= 75
-                          ? 'bg-red-500'
-                          : simResults.riskScore >= 45
-                          ? 'bg-amber-500'
-                          : 'bg-emerald-500'
-                      }`}
-                      style={{ width: `${simResults.riskScore}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* Dispatch recommendation */}
-                <div className="rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 p-3.5 mt-2 shadow-sm text-left">
-                  <div className="flex items-center gap-2 text-xs font-bold text-[#BA5A5A] uppercase tracking-wider mb-1">
-                    <span>💡</span> Recommended Dispatch Action
-                  </div>
-                  <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed font-semibold">
-                    {simResults.dispatchAction}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center max-w-xs space-y-2">
-                <span className="text-3xl">🎛️</span>
-                <h4 className="text-sm font-extrabold text-gray-700 dark:text-gray-300">Sandbox Awaiting Config</h4>
-                <p className="text-[11px] text-gray-400 leading-relaxed">
-                  Configure location, violation category, and vehicle count on the left, then click Simulate to run model calculations.
+              {/* Middle text */}
+              <div className="space-y-0.5">
+                <h3 className="text-xs font-bold text-gray-900" style={{ fontFamily: "'Inter', sans-serif" }}>For Citizens</h3>
+                <p className="text-[9px] text-gray-500 font-medium leading-normal">
+                  Helping citizens enjoy safer, smoother and more predictable journeys across Bengaluru.
                 </p>
               </div>
-            )}
+            </div>
+            {/* Right Illustration */}
+            <img 
+              src="/ChatGPT Image Jun 20, 2026, 04_25_31 PM.png" 
+              alt="For Citizens" 
+              className="absolute right-0 bottom-0 h-[80%] w-auto max-w-[42%] object-contain object-right-bottom mix-blend-multiply" 
+            />
+          </div>
+
+          {/* Footer list benefits */}
+          <div className="grid grid-cols-3 divide-x divide-gray-100 py-1.5 text-center border-t border-gray-50">
+            <div className="text-[8.5px] font-bold text-gray-500 uppercase tracking-wider flex items-center justify-center gap-1">
+              <ClockIcon className="h-3.5 w-3.5 text-[#C26D6D]" />
+              <span>Smoother Commutes</span>
+            </div>
+            <div className="text-[8.5px] font-bold text-gray-500 uppercase tracking-wider flex items-center justify-center gap-1">
+              <ShieldIcon className="h-3.5 w-3.5 text-[#C26D6D]" />
+              <span>Safer Roads</span>
+            </div>
+            <div className="text-[8.5px] font-bold text-gray-500 uppercase tracking-wider flex items-center justify-center gap-1">
+              <SmileyIcon className="h-3.5 w-3.5 text-[#C26D6D]" />
+              <span>Better Urban Experience</span>
+            </div>
           </div>
         </div>
+
+        {/* Right Side: For Officers */}
+        <div className="bg-white border border-gray-100 rounded-xl shadow-sm flex flex-col justify-between overflow-hidden">
+          <div className="relative overflow-hidden p-3 min-h-[82px]">
+            <div className="max-w-[62%] flex items-start gap-3">
+              {/* Left Badge circle */}
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EEF7F2]">
+                <CapIcon className="h-5.5 w-5.5 text-[#489C6F]" />
+              </div>
+              {/* Middle text */}
+              <div className="space-y-0.5">
+                <h3 className="text-xs font-bold text-gray-900" style={{ fontFamily: "'Inter', sans-serif" }}>For Officers & Administration</h3>
+                <p className="text-[9px] text-gray-500 font-medium leading-normal">
+                  Empowering teams with the right insights to allocate resources efficiently and maximize impact.
+                </p>
+              </div>
+            </div>
+            {/* Right Illustration */}
+            <img 
+              src="/ChatGPT Image Jun 20, 2026, 04_25_43 PM.png" 
+              alt="For Officers & Administration" 
+              className="absolute right-0 bottom-0 h-[80%] w-auto max-w-[42%] object-contain object-right-bottom mix-blend-multiply" 
+            />
+          </div>
+
+          {/* Footer list benefits */}
+          <div className="grid grid-cols-3 divide-x divide-gray-100 py-1.5 text-center border-t border-gray-50">
+            <div className="text-[8.5px] font-bold text-gray-500 uppercase tracking-wider flex items-center justify-center gap-1">
+              <MapPinIcon className="h-3.5 w-3.5 text-[#489C6F]" />
+              <span>Smart Deployment</span>
+            </div>
+            <div className="text-[8.5px] font-bold text-gray-500 uppercase tracking-wider flex items-center justify-center gap-1">
+              <TrendingUpIcon className="h-3.5 w-3.5 text-[#489C6F]" />
+              <span>Higher Efficiency</span>
+            </div>
+            <div className="text-[8.5px] font-bold text-gray-500 uppercase tracking-wider flex items-center justify-center gap-1">
+              <DatabaseIcon className="h-3.5 w-3.5 text-[#489C6F]" />
+              <span>Data-Backed Decisions</span>
+            </div>
+          </div>
+        </div>
+
       </div>
+
     </div>
   );
 }

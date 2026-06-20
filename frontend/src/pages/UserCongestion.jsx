@@ -350,7 +350,10 @@ export default function UserCongestion() {
               </div>
             )}
           </div>
+        </div>
 
+        {/* Controls, Impact Stats & Advisories Column */}
+        <div className="space-y-6">
           {/* Trip Planner Control Card */}
           <TiltCard className="rounded-xl border border-command-border bg-command-panel p-5 shadow-sm space-y-4">
             <div className="flex items-center gap-2 text-left">
@@ -393,10 +396,6 @@ export default function UserCongestion() {
               Calculate Route Options
             </button>
           </TiltCard>
-        </div>
-
-        {/* Impact Stats + Advisories Column */}
-        <div className="space-y-6">
           {routeDetails && (
             <div className="rounded-xl border border-command-success/30 bg-command-success/5 p-5 shadow-sm space-y-4 animate-slideIn">
               <div className="flex items-center justify-between border-b border-command-success/20 pb-3 text-left">

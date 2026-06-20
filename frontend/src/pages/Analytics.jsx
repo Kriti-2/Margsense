@@ -53,11 +53,11 @@ export default function Analytics() {
   const scopeLabel = analytics?.zone_breakdown_scope === 'last_24h' ? 'Last 24 hours (live)' : 'All time';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pt-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">Analytics & Economic Impact</h2>
-          <p className="mt-1 text-sm text-command-muted">
+          <h2 className="text-xl font-bold text-gray-900 tracking-tight" style={{ fontFamily: "'Inter', sans-serif" }}>Analytics & Economic Impact</h2>
+          <p className="mt-1 text-xs text-gray-400 font-medium" style={{ fontFamily: "'Inter', sans-serif" }}>
             Live congestion fingerprinting and economic loss from real Bengaluru violation data
           </p>
         </div>

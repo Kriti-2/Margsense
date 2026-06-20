@@ -240,12 +240,12 @@ export default function ShiftPlannerPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pt-8">
       {/* Header and Live Status */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Interactive Patrol Dispatch Canvas</h2>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+          <h2 className="text-xl font-bold text-gray-900 tracking-tight" style={{ fontFamily: "'Inter', sans-serif" }}>Interactive Patrol Dispatch Canvas</h2>
+          <p className="mt-1 text-xs text-gray-400 font-medium" style={{ fontFamily: "'Inter', sans-serif" }}>
             Drag, toggle, or auto-optimize officer patrols to protect active emergency corridors
           </p>
         </div>

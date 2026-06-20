@@ -646,12 +646,12 @@ export default function CameraMonitor() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pt-8">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">CCTV AI Detection Center</h2>
-          <p className="mt-1 text-sm text-command-muted">
+          <h2 className="text-xl font-bold text-gray-900 tracking-tight" style={{ fontFamily: "'Inter', sans-serif" }}>CCTV AI Detection Center</h2>
+          <p className="mt-1 text-xs text-gray-400 font-medium" style={{ fontFamily: "'Inter', sans-serif" }}>
             Simulated live edge-inference cameras scanning junctions for traffic obstructions
           </p>
         </div>

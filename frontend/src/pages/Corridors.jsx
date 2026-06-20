@@ -83,11 +83,11 @@ export default function Corridors() {
   const corridorList = corridors?.corridors || [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pt-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">Green Corridor Protector</h2>
-          <p className="mt-1 text-sm text-command-muted">
+          <h2 className="text-xl font-bold text-gray-900 tracking-tight" style={{ fontFamily: "'Inter', sans-serif" }}>Green Corridor Protector</h2>
+          <p className="mt-1 text-xs text-gray-400 font-medium" style={{ fontFamily: "'Inter', sans-serif" }}>
             Monitor emergency routes — MG Road, Silk Board, Whitefield corridors
           </p>
         </div>
