@@ -742,22 +742,8 @@ export default function CameraMonitor() {
                   {renderBoundingBoxes(cam.id)}
 
                   {/* Location Tag */}
-                  <div className="absolute bottom-3 left-3 flex flex-col gap-1">
-                    <div className="bg-black/75 px-2 py-1 rounded border border-command-border text-[10px] font-mono text-gray-400 flex items-center gap-1.5">
-                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      LAT: {cam.lat.toFixed(5)} · LNG: {cam.lng.toFixed(5)}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleUseGPS}
-                      disabled={gpsLoading}
-                      className="text-[10px] text-command-accent hover:underline flex items-center gap-1.5 font-semibold cursor-pointer w-fit bg-black/50 px-2 py-0.5 rounded border border-command-accent/20"
-                    >
-                      {gpsLoading ? 'Locating...' : 'Use GPS Location'}
-                    </button>
+                  <div className="absolute bottom-3 left-3 bg-black/75 px-2 py-1 rounded border border-command-border text-[10px] font-mono text-gray-400">
+                    LAT: {cam.lat.toFixed(5)} · LNG: {cam.lng.toFixed(5)}
                   </div>
                 </div>
               </div>
