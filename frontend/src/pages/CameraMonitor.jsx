@@ -783,29 +783,6 @@ export default function CameraMonitor() {
 
 
           <div className="flex flex-wrap items-center gap-4">
-            <button
-              type="button"
-              onClick={handleGenerateRandom}
-              className="flex items-center justify-center gap-2 rounded-lg border border-command-border bg-command-bg px-3 py-2 text-xs font-medium text-white hover:bg-white/5 transition-colors cursor-pointer"
-            >
-              <svg className="h-4 w-4 text-command-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              Random Data
-            </button>
-            <button
-              type="button"
-              onClick={handleSendDemo}
-              disabled={loading}
-              className="flex items-center justify-center gap-2 rounded-lg bg-command-success px-3 py-2 text-xs font-semibold text-white hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer"
-            >
-              <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              Demo Violation
-            </button>
-
             {/* Toggle YOLO Mode */}
             <div className="flex items-center gap-2">
               <span className="text-xs text-gray-400 font-medium">YOLO Detection:</span>
