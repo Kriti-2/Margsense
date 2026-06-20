@@ -32,7 +32,7 @@ function StatPill({ icon, iconBg, value, label, sub }) {
 }
 
 // ── Hero section — image carousel + left overlay + bottom stats strip ───────
-function HeroSection({ analytics, lastTick, connected }) {
+function HeroSection({ analytics, lastTick, connected, isOfficer }) {
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -193,17 +193,19 @@ function HeroSection({ analytics, lastTick, connected }) {
             label="High Risk"
             sub="Zones"
           />
-          <StatPill
-            icon={
-              <svg className="h-4.5 w-4.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 00-2 2z" />
-              </svg>
-            }
-            iconBg="bg-blue-50"
-            value="4"
-            label="CCTV"
-            sub="Streams"
-          />
+          {isOfficer && (
+            <StatPill
+              icon={
+                <svg className="h-4.5 w-4.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 00-2 2z" />
+                </svg>
+              }
+              iconBg="bg-blue-50"
+              value="4"
+              label="CCTV"
+              sub="Streams"
+            />
+          )}
           <StatPill
             icon={
               <svg className="h-4.5 w-4.5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -309,7 +311,7 @@ export default function Homepage() {
   if (loading) {
     return (
       <div className="animate-fadeIn">
-        <HeroSection analytics={null} lastTick={null} connected={false} />
+        <HeroSection analytics={null} lastTick={null} connected={false} isOfficer={isOfficer} />
         <div className="flex h-40 items-center justify-center">
           <div className="text-center">
             <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-[#5E8599] border-t-transparent" />
@@ -334,7 +336,7 @@ export default function Homepage() {
   return (
     <div className="animate-fadeIn">
       {/* ── Hero ── */}
-      <HeroSection analytics={analytics} lastTick={lastTick} connected={connected} />
+      <HeroSection analytics={analytics} lastTick={lastTick} connected={connected} isOfficer={isOfficer} />
 
       {/* ── Dashboard section ── */}
       <div className="space-y-6">
