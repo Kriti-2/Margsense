@@ -10,9 +10,9 @@ const HeatMap = lazy(() => import('../components/HeatMap'));
 const WeatherBanner = lazy(() => import('../components/WeatherBanner'));
 
 const SLIDES = [
-  '/ChatGPT Image Jun 19, 2026, 08_53_06 PM.png',
-  '/ChatGPT Image Jun 19, 2026, 08_53_15 PM.png',
-  '/ChatGPT Image Jun 19, 2026, 08_53_22 PM.png',
+  '/slide1.webp',
+  '/slide2.webp',
+  '/slide3.webp',
 ];
 
 // ── Small stat pill used in the hero strip ──────────────────────────────────

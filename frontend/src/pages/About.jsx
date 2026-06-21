@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 
 const CityscapeSVG = () => (
   <img 
-    src="/ChatGPT Image Jun 20, 2026, 04_25_20 PM.png" 
+    src="/cityscape.webp" 
     alt="Bengaluru Cityscape" 
     className="w-full h-[145px] lg:h-[175px] object-contain object-right mix-blend-multiply" 
   />
@@ -205,7 +205,7 @@ export default function About() {
             </div>
             {/* Right Illustration */}
             <img 
-              src="/ChatGPT Image Jun 20, 2026, 04_25_31 PM.png" 
+              src="/citizens.webp" 
               alt="For Citizens" 
               className="absolute right-0 bottom-0 h-[80%] w-auto max-w-[42%] object-contain object-right-bottom mix-blend-multiply" 
             />
@@ -246,7 +246,7 @@ export default function About() {
             </div>
             {/* Right Illustration */}
             <img 
-              src="/ChatGPT Image Jun 20, 2026, 04_25_43 PM.png" 
+              src="/officers.webp" 
               alt="For Officers & Administration" 
               className="absolute right-0 bottom-0 h-[80%] w-auto max-w-[42%] object-contain object-right-bottom mix-blend-multiply" 
             />
