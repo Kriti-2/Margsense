@@ -18,6 +18,15 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+# Set up global proxy settings so that the on-the-fly HTTP clients
+# created by google-genai use the proxy, while other APIs bypass it.
+gemini_proxy = os.environ.get("GEMINI_PROXY", "")
+if gemini_proxy:
+    os.environ["HTTPS_PROXY"] = gemini_proxy
+    # Exclude other API domains, database, redis, and local loopbacks from the proxy
+    os.environ["NO_PROXY"] = "api.openweathermap.org,api.tomtom.com,localhost,127.0.0.1,db,redis"
+    logger.info(f"Configured global proxy for Gemini: {gemini_proxy} (with bypass for: {os.environ['NO_PROXY']})")
+
 router = APIRouter(prefix="/chat", tags=["AI Assistant"])
 
 class ChatMessage(BaseModel):
@@ -38,26 +47,10 @@ def get_genai_client(api_key: str):
             )
         from google.genai import types
 
-        # If GEMINI_PROXY is set, temporarily apply it as HTTPS_PROXY
-        # so only the genai httpx transport uses the proxy.
-        # Other APIs (TomTom, Weather, SMTP) are NOT affected.
-        gemini_proxy = os.environ.get("GEMINI_PROXY", "")
-        old_https_proxy = os.environ.get("HTTPS_PROXY")
-        if gemini_proxy:
-            os.environ["HTTPS_PROXY"] = gemini_proxy
-            logger.info(f"Routing Gemini API through proxy: {gemini_proxy}")
-
         client = genai.Client(
             api_key=api_key,
             http_options=types.HttpOptions(timeout=15000)
         )
-
-        # Restore original HTTPS_PROXY so other APIs are unaffected
-        if gemini_proxy:
-            if old_https_proxy is not None:
-                os.environ["HTTPS_PROXY"] = old_https_proxy
-            else:
-                os.environ.pop("HTTPS_PROXY", None)
 
         try:
             available_models = [m.name for m in client.models.list()]
