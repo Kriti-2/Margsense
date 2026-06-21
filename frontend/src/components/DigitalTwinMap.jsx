@@ -40,6 +40,11 @@ export default function DigitalTwinMap({ data, zoneIntensity = {}, className = '
   const [show3dBuildings, setShow3dBuildings] = useState(true);
   const [showTrafficFlow, setShowTrafficFlow] = useState(true);
 
+  const isOrbitingRef = useRef(isOrbiting);
+  useEffect(() => {
+    isOrbitingRef.current = isOrbiting;
+  }, [isOrbiting]);
+
   const features = data?.features || [];
 
   // 1. Initialize Map
@@ -73,6 +78,7 @@ export default function DigitalTwinMap({ data, zoneIntensity = {}, className = '
       }
       markersRef.current.forEach(m => m.remove());
       map.remove();
+      mapRef.current = null;
     };
   }, []);
 
@@ -295,7 +301,7 @@ export default function DigitalTwinMap({ data, zoneIntensity = {}, className = '
       }
 
       // 5. Rotate Camera (Orbit mode)
-      if (isOrbiting) {
+      if (isOrbitingRef.current) {
         const bearing = map.getBearing();
         map.setBearing((bearing + 0.08) % 360);
       }
@@ -309,21 +315,27 @@ export default function DigitalTwinMap({ data, zoneIntensity = {}, className = '
   // 6. Layer visibility triggers
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
+    if (!map || !map.isStyleLoaded()) return;
 
-    // Toggle 3D zone block extrusion
-    if (map.getLayer('zones-3d')) {
-      map.setLayoutProperty('zones-3d', 'visibility', show3dBuildings ? 'visible' : 'none');
+    try {
+      if (map.getLayer('zones-3d')) {
+        map.setLayoutProperty('zones-3d', 'visibility', show3dBuildings ? 'visible' : 'none');
+      }
+    } catch (e) {
+      console.warn("Failed to toggle 3D zone visibility:", e);
     }
   }, [show3dBuildings]);
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
+    if (!map || !map.isStyleLoaded()) return;
 
-    // Toggle Vehicle flows
-    if (map.getLayer('vehicles-points')) {
-      map.setLayoutProperty('vehicles-points', 'visibility', showTrafficFlow ? 'visible' : 'none');
+    try {
+      if (map.getLayer('vehicles-points')) {
+        map.setLayoutProperty('vehicles-points', 'visibility', showTrafficFlow ? 'visible' : 'none');
+      }
+    } catch (e) {
+      console.warn("Failed to toggle traffic flow visibility:", e);
     }
   }, [showTrafficFlow]);
 
