@@ -14,6 +14,18 @@ const LOCATIONS = [
   { name: 'Koramangala 80ft Rd', coords: [12.9352, 77.6245] },
   { name: 'MG Road Metro Stn', coords: [12.9750, 77.6063] },
   { name: 'Indiranagar 100ft Rd', coords: [12.9784, 77.6408] },
+  { name: 'Whitefield ITPL', coords: [12.9698, 77.7500] },
+  { name: 'HSR Layout Sector 1', coords: [12.9116, 77.6473] },
+  { name: 'Majestic Bus Stand', coords: [12.9766, 77.5712] },
+  { name: 'Electronic City Phase 1', coords: [12.8452, 77.6602] },
+  { name: 'Hebbal Flyover', coords: [13.0358, 77.5978] },
+  { name: 'Jayanagar 4th Block', coords: [12.9284, 77.5824] },
+  { name: 'Yelahanka New Town', coords: [13.0978, 77.5862] },
+  { name: 'Marathahalli Bridge', coords: [12.9592, 77.6974] },
+  { name: 'Malleshwaram 18th Cross', coords: [12.9984, 77.5720] },
+  { name: 'Banashankari TTMC', coords: [12.9156, 77.5736] },
+  { name: 'BTM Layout 2nd Stage', coords: [12.9166, 77.6083] },
+  { name: 'Rajajinagar Metro', coords: [12.9892, 77.5562] },
 ];
 
 function FitRouteBounds({ route }) {

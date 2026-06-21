@@ -67,7 +67,19 @@ export const translations = {
     "Silk Board Junction": "Silk Board Junction",
     "Koramangala 80ft Rd": "Koramangala 80ft Rd",
     "MG Road Metro Stn": "MG Road Metro Stn",
-    "Indiranagar 100ft Rd": "Indiranagar 100ft Rd"
+    "Indiranagar 100ft Rd": "Indiranagar 100ft Rd",
+    "Whitefield ITPL": "Whitefield ITPL",
+    "HSR Layout Sector 1": "HSR Layout Sector 1",
+    "Majestic Bus Stand": "Majestic Bus Stand",
+    "Electronic City Phase 1": "Electronic City Phase 1",
+    "Hebbal Flyover": "Hebbal Flyover",
+    "Jayanagar 4th Block": "Jayanagar 4th Block",
+    "Yelahanka New Town": "Yelahanka New Town",
+    "Marathahalli Bridge": "Marathahalli Bridge",
+    "Malleshwaram 18th Cross": "Malleshwaram 18th Cross",
+    "Banashankari TTMC": "Banashankari TTMC",
+    "BTM Layout 2nd Stage": "BTM Layout 2nd Stage",
+    "Rajajinagar Metro": "Rajajinagar Metro"
   },
   hi: {
     // Navigation
@@ -138,6 +150,18 @@ export const translations = {
     "Koramangala 80ft Rd": "कोरामंगला 80 फीट रोड",
     "MG Road Metro Stn": "एमजी रोड मेट्रो स्टेशन",
     "Indiranagar 100ft Rd": "इंदिरानगर 100 फीट रोड",
+    "Whitefield ITPL": "व्हाइटफील्ड आईटीपीएल",
+    "HSR Layout Sector 1": "एचएसआर लेआउट सेक्टर 1",
+    "Majestic Bus Stand": "मजेस्टिक बस स्टैंड",
+    "Electronic City Phase 1": "इलेक्ट्रॉनिक सिटी फेज 1",
+    "Hebbal Flyover": "हेब्बाल फ्लाईओवर",
+    "Jayanagar 4th Block": "जयनगर 4 ब्लॉक",
+    "Yelahanka New Town": "येलहंका न्यू टाउन",
+    "Marathahalli Bridge": "मराठहल्ली ब्रिज",
+    "Malleshwaram 18th Cross": "मल्लेश्वरम 18 क्रॉस",
+    "Banashankari TTMC": "बनाशंकरी टीटीएमसी",
+    "BTM Layout 2nd Stage": "बीटीएम लेआउट 2 स्टेज",
+    "Rajajinagar Metro": "राजाजीनगर मेट्रो",
 
     // Smart Commute Page (UserCongestion UI)
     "Compliance Ring": "अनुपालन चक्र",
@@ -242,6 +266,18 @@ export const translations = {
     "Koramangala 80ft Rd": "ಕೋರಮಂಗಲ 80 ಅಡಿ ರಸ್ತೆ",
     "MG Road Metro Stn": "ಎಂ ಜಿ ರಸ್ತೆ ಮೆಟ್ರೋ ನಿಲ್ದಾಣ",
     "Indiranagar 100ft Rd": "ಇಂದಿರಾನಗರ್ 100 ಅಡಿ ರಸ್ತೆ",
+    "Whitefield ITPL": "ವೈಟ್‌ಫೀಲ್ಡ್ ಐಟಿಪಿಎಲ್",
+    "HSR Layout Sector 1": "ಎಚ್‌ಎಸ್‌ಆರ್ ಲೇಔಟ್ ಸೆಕ್ಟರ್ 1",
+    "Majestic Bus Stand": "ಮೆಜೆಸ್ಟಿಕ್ ಬಸ್ ನಿಲ್ದಾಣ",
+    "Electronic City Phase 1": "ಎಲೆಕ್ಟ್ರಾನಿಕ್ ಸಿಟಿ ಫೇಸ್ 1",
+    "Hebbal Flyover": "ಹೆಬ್ಬಾಳ ಫ್ಲೈಓವರ್",
+    "Jayanagar 4th Block": "ಜಯನಗರ 4 ನೇ ಬ್ಲಾಕ್",
+    "Yelahanka New Town": "ಯಲಹಂಕ ನ್ಯೂ ಟೌನ್",
+    "Marathahalli Bridge": "ಮರತಹಳ್ಳಿ ಸೇತುವೆ",
+    "Malleshwaram 18th Cross": "ಮಲ್ಲೇಶ್ವರಂ 18 ನೇ ಕ್ರಾಸ್",
+    "Banashankari TTMC": "ಬನಶಂಕರಿ ಟಿಟಿಎಂಸಿ",
+    "BTM Layout 2nd Stage": "ಬಿಟಿಎಂ ಲೇಔಟ್ 2 ನೇ ಹಂತ",
+    "Rajajinagar Metro": "ರಾಜಾಜಿನಗರ ಮೆಟ್ರೋ",
 
     // Smart Commute Page (UserCongestion UI)
     "Compliance Ring": "ಅನುಸರಣೆ ವಲಯ",
