@@ -19,6 +19,7 @@ const CameraMonitor = lazy(() => import('./pages/CameraMonitor'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const UserCongestion = lazy(() => import('./pages/UserCongestion'));
+const DigitalTwin = lazy(() => import('./pages/DigitalTwin'));
 
 function CorridorsRoute() {
   const { user } = useAuth();
@@ -73,6 +74,7 @@ export default function App() {
                   <Route path="/analytics" element={<Analytics />} />
                   <Route path="/shift-planner" element={<ShiftPlanner />} />
                   <Route path="/monitor" element={<CameraMonitor />} />
+                  <Route path="/digital-twin" element={<DigitalTwin />} />
                 </Route>
               </Route>
 

@@ -18,6 +18,7 @@ export default function DashboardLayout({ children }) {
 
   const navLinks = [
     { to: '/', key: 'home', end: true },
+    { to: '/digital-twin', key: 'digitalTwin' },
     { to: '/predict', key: 'predict' },
     { to: '/analytics', key: 'analytics' },
     { to: '/shift-planner', key: 'shiftPlanner' },
