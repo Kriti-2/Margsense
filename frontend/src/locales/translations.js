@@ -43,6 +43,9 @@ export const translations = {
     violations1h: "Violations (1h)",
     avgCongestionScore: "Avg Congestion Score",
     last1Hour: "Last 1 Hour",
+    last24Hours: "Last 24 Hours",
+    last7Days: "Last 7 Days",
+    allTime: "All Time",
 
     // Trip Planner (UserCongestion)
     source: "Source Station / Landmark",
@@ -141,6 +144,9 @@ export const translations = {
     violations1h: "उल्लंघन (1 घंटा)",
     avgCongestionScore: "औसत भीड़भाड़ स्कोर",
     last1Hour: "पिछला 1 घंटा",
+    last24Hours: "पिछले 24 घंटे",
+    last7Days: "पिछले 7 दिन",
+    allTime: "कुल समय",
 
     // Trip Planner (UserCongestion)
     source: "प्रस्थान स्थान / लैंडमार्क",
@@ -273,6 +279,9 @@ export const translations = {
     violations1h: "ಉಲ್ಲಂಘನೆಗಳು (1 ಗಂಟೆ)",
     avgCongestionScore: "ಸರಾಸರಿ ದಟ್ಟಣೆ ಸ್ಕೋರ್",
     last1Hour: "ಕಳೆದ 1 ಗಂಟೆ",
+    last24Hours: "ಕಳೆದ 24 ಗಂಟೆಗಳು",
+    last7Days: "ಕಳೆದ 7 ದಿನಗಳು",
+    allTime: "ಎಲ್ಲಾ ಸಮಯ",
 
     // Trip Planner (UserCongestion)
     source: "ಹೊರಡುವ ಸ್ಥಳ / ಹೆಗ್ಗುರುತು",

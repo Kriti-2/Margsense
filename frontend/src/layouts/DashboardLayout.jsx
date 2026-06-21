@@ -73,6 +73,15 @@ export default function DashboardLayout({ children }) {
             {/* Live Feed */}
             <Link
               to="/"
+              onClick={(e) => {
+                if (window.location.pathname === '/') {
+                  e.preventDefault();
+                  const el = document.getElementById('overview-section');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                  localStorage.setItem('scroll_to_overview', 'true');
+                }
+              }}
               className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-[#5E8599] transition-colors cursor-pointer"
             >
               <span className="h-2 w-2 rounded-full bg-[#8A9E85] animate-pulse" />
