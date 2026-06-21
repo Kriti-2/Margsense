@@ -91,7 +91,7 @@ export default function Login() {
             {/* Logo, Header, and Pulsing Live Badge */}
             <div className="mb-4 flex flex-col items-center text-center">
               <div className="flex items-center justify-center gap-2 mb-1">
-                <img src="/logo.png" alt="Logo" className="h-10 w-10 object-contain rounded-xl" />
+                <img src="/logo.png" alt="Logo" className="h-10 w-10 object-contain bg-white p-1 rounded-xl" />
                 <h1 className="text-xl font-black tracking-tight text-white select-none">मार्ग Sense</h1>
               </div>
               

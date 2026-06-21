@@ -42,7 +42,7 @@ export default function UserLayout({ children }) {
 
           {/* Logo + Branding */}
           <div className="flex items-center gap-2.5 shrink-0">
-            <img src="/logo.png" alt="Logo" className="h-9 w-9 object-contain rounded-lg" />
+            <img src="/logo.png" alt="Logo" className="h-9 w-9 object-contain rounded-lg dark:bg-white dark:p-0.5" />
             <div className="leading-tight">
               <div className="text-[15px] font-bold text-gray-900 dark:text-white">{t('appTitle')}</div>
               <div className="text-[10px] text-gray-400 dark:text-gray-500 font-medium hidden sm:block">{t('tagline')}</div>
