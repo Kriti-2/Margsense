@@ -24,10 +24,6 @@ services:
       - AUTH_ENABLED=true
       - DEBUG=false
       - FRONTEND_URL
-      - TOMTOM_API_KEY
-      - WEATHER_API_KEY
-      - GEMINI_API_KEY
-      - GEMINI_PROXY
     volumes:
       - .:/app/root
       - ./backend/data:/app/data
@@ -52,9 +48,6 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - AUTH_ENABLED=true
       - DEBUG=false
-      - TOMTOM_API_KEY
-      - WEATHER_API_KEY
-      - GEMINI_API_KEY
     volumes:
       - .:/app/root
       - ./backend/data:/app/data
