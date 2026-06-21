@@ -34,7 +34,11 @@ def get_genai_client(api_key: str):
             raise HTTPException(
                 status_code=500, detail="google-genai package is not installed."
             )
-        _genai_client = genai.Client(api_key=api_key)
+        from google.genai import types
+        _genai_client = genai.Client(
+            api_key=api_key,
+            http_options=types.HttpOptions(timeout=15000)
+        )
     return _genai_client
 
 # TTL Cache for parsed live data (15 seconds)

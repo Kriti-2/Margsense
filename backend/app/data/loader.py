@@ -1,9 +1,11 @@
 import json
 import logging
+from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 from app.config import BASE_DIR, get_settings
@@ -137,21 +139,50 @@ class ViolationDataStore:
 
     def get_forecast(self):
         if self._forecast_cache is None:
+            if self._df is None:
+                from app.models.forecast_schemas import ForecastResponse
+                return ForecastResponse(
+                    generated_at=datetime.utcnow(),
+                    horizon_hours=24,
+                    top_risk_zones=[],
+                    weather_escalation=None
+                )
             self.warm_caches()
         return self._forecast_cache
 
     def get_analytics(self) -> dict:
         if self._analytics_cache is None:
+            if self._df is None:
+                return {
+                    "generated_at": datetime.utcnow().isoformat(),
+                    "summary": {"total_violations": 0, "critical_alerts": 0, "active_hotspots": 0},
+                    "economic_loss": {"total_loss_inr": 0.0, "fuel_wasted_liters": 0.0, "productivity_lost_hours": 0.0},
+                    "zone_analytics": [],
+                    "trends": []
+                }
             self.warm_caches()
         return self._analytics_cache
 
     def get_recidivism(self) -> dict:
         if self._recidivism_cache is None:
+            if self._df is None:
+                return {
+                    "generated_at": datetime.utcnow().isoformat(),
+                    "zones": [],
+                    "stubborn_zone_count": 0,
+                    "threshold_pct": 20.0
+                }
             self.warm_caches()
         return self._recidivism_cache
 
     def get_shift_planner(self) -> dict:
         if self._shift_planner_cache is None:
+            if self._df is None:
+                return {
+                    "generated_at": datetime.utcnow().isoformat(),
+                    "recommendations": [],
+                    "total_officers_needed": 0
+                }
             self.warm_caches()
         return self._shift_planner_cache
 
@@ -159,22 +190,52 @@ class ViolationDataStore:
         from app.services.heatmap_service import build_heatmap_response
 
         if self._heatmap_cache is None:
+            if self._df is None:
+                return {
+                    "type": "FeatureCollection",
+                    "features": [],
+                    "generated_at": datetime.utcnow().isoformat()
+                }
             self.warm_caches()
         if limit == 5000:
             return self._heatmap_cache
+        if self._df is None:
+            return {
+                "type": "FeatureCollection",
+                "features": [],
+                "generated_at": datetime.utcnow().isoformat()
+            }
         return build_heatmap_response(self.load(), limit=limit)
 
     def get_severity_queue(self, limit: int = 30) -> dict:
         from app.services.severity_service import build_severity_response
 
         if self._severity_cache is None:
+            if self._df is None:
+                return {
+                    "generated_at": datetime.utcnow().isoformat(),
+                    "queue": [],
+                    "summary": {"CRITICAL": 0, "WARNING": 0, "LOW": 0}
+                }
             self.warm_caches()
         if limit == 30:
             return self._severity_cache
+        if self._df is None:
+            return {
+                "generated_at": datetime.utcnow().isoformat(),
+                "queue": [],
+                "summary": {"CRITICAL": 0, "WARNING": 0, "LOW": 0}
+            }
         return build_severity_response(self.load(), limit=limit)
 
     def get_corridors(self) -> dict:
         if self._corridors_cache is None:
+            if self._df is None:
+                return {
+                    "generated_at": datetime.utcnow().isoformat(),
+                    "corridors": [],
+                    "summary": {"active_corridors": 0, "critical_alerts": 0}
+                }
             self.warm_caches()
         return self._corridors_cache
 
@@ -267,12 +328,30 @@ class ViolationDataStore:
             )
             zones.loc[mask] = name
 
-        unknown = zones.eq("Unknown")
-        if unknown.any():
-            for idx in df.index[unknown]:
-                lat, lon = df.at[idx, "latitude"], df.at[idx, "longitude"]
-                if pd.notna(lat) and pd.notna(lon):
-                    zones.at[idx] = assign_zone(lat, lon, BENGALURU_ZONES)
+        unknown_mask = zones.eq("Unknown") & df["latitude"].notna() & df["longitude"].notna()
+        if unknown_mask.any():
+            unknown_df = df[unknown_mask]
+            lats = unknown_df["latitude"].to_numpy()
+            lons = unknown_df["longitude"].to_numpy()
+            
+            zone_names = list(BENGALURU_ZONES.keys())
+            center_lats = np.array([BENGALURU_ZONES[z]["center"][0] for z in zone_names])
+            center_lons = np.array([BENGALURU_ZONES[z]["center"][1] for z in zone_names])
+            
+            dlat = np.radians(center_lats[np.newaxis, :] - lats[:, np.newaxis])
+            dlon = np.radians(center_lons[np.newaxis, :] - lons[:, np.newaxis])
+            
+            a = (
+                np.sin(dlat / 2.0) ** 2
+                + np.cos(np.radians(lats[:, np.newaxis]))
+                * np.cos(np.radians(center_lats[np.newaxis, :]))
+                * np.sin(dlon / 2.0) ** 2
+            )
+            dists = 2.0 * 6371.0 * np.arcsin(np.sqrt(a))
+            min_indices = np.argmin(dists, axis=1)
+            assigned_names = [zone_names[idx] for idx in min_indices]
+            zones.loc[unknown_mask] = assigned_names
+            
         return zones
 
     @staticmethod

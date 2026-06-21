@@ -30,8 +30,46 @@ class RealtimeEngine:
         self._settings = get_settings()
         self._last_tick: dict[str, Any] = {}
 
+    def get_fallback_tick(self) -> dict[str, Any]:
+        ts = datetime.now(timezone.utc)
+        return {
+            "type": "live_tick_fallback",
+            "timestamp": ts.isoformat(),
+            "live_mode": self._settings.live_mode,
+            "data_sources": {
+                "violations": "bengaluru_police_dataset (loading...)",
+                "traffic": {"source": "fallback", "updated_at": None, "zones": 0},
+                "replay": {"buffer_size": 0},
+            },
+            "reference_time": ts.isoformat(),
+            "kpis": {
+                "violations_last_hour": 0,
+                "violations_last_24h": 0,
+                "live_buffer_size": 0,
+            },
+            "zone_intensity": {},
+            "congestion_fingerprints": [],
+            "corridors": {"corridors": [], "generated_at": ts.isoformat()},
+            "analytics": {},
+            "severity_summary": {},
+            "severity_queue": [],
+            "new_violations": [],
+            "weather": {
+                "condition": "Clear",
+                "description": "clear sky",
+                "temperature_c": 28.0,
+                "humidity_pct": 60,
+                "wind_speed_kmh": 10.0,
+                "multiplier": 1.0,
+                "severity_boost": 0.0,
+                "alert_level": "NONE",
+            }
+        }
+
     def get_last_tick(self) -> dict[str, Any]:
         if not self._last_tick:
+            if get_data_store()._df is None:
+                return self.get_fallback_tick()
             return self.tick()
         return self._last_tick
 

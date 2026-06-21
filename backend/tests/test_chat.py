@@ -39,7 +39,9 @@ def test_chat_endpoint_success(auth_client, monkeypatch):
         assert response.status_code == 200
         assert response.json() == {"response": "This is a mocked assistant response."}
         
-        mock_client_class.assert_called_once_with(api_key="dummy-api-key")
+        mock_client_class.assert_called_once()
+        assert mock_client_class.call_args[1]["api_key"] == "dummy-api-key"
+        assert mock_client_class.call_args[1]["http_options"].timeout == 15000
         mock_generate.assert_called_once()
         # Verify the model used is gemini-2.5-flash
         call_kwargs = mock_generate.call_args[1]
@@ -71,7 +73,9 @@ def test_chat_endpoint_login_context(auth_client, monkeypatch):
         assert response.status_code == 200
         assert response.json() == {"response": "Here is how to login."}
         
-        mock_client_class.assert_called_once_with(api_key="dummy-api-key")
+        mock_client_class.assert_called_once()
+        assert mock_client_class.call_args[1]["api_key"] == "dummy-api-key"
+        assert mock_client_class.call_args[1]["http_options"].timeout == 15000
         mock_generate.assert_called_once()
         
         call_kwargs = mock_generate.call_args[1]
@@ -112,7 +116,9 @@ def test_chat_endpoint_streaming(auth_client, monkeypatch):
         # The content should be plain text and streamed
         assert response.text == "This is a streamed response."
         
-        mock_client_class.assert_called_once_with(api_key="dummy-api-key")
+        mock_client_class.assert_called_once()
+        assert mock_client_class.call_args[1]["api_key"] == "dummy-api-key"
+        assert mock_client_class.call_args[1]["http_options"].timeout == 15000
         mock_generate_stream.assert_called_once()
         call_kwargs = mock_generate_stream.call_args[1]
         assert call_kwargs["model"] == "gemini-2.5-flash"
