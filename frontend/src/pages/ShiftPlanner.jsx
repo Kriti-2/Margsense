@@ -1,11 +1,11 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { api } from '../api/client';
 import { useLiveFeed } from '../hooks/useLiveFeed';
 import KPICard from '../components/KPICard';
 import LiveStatusBar from '../components/LiveStatusBar';
 import EnforcementBrief from '../components/EnforcementBrief';
-import SeverityQueue from '../components/SeverityQueue';
-import RecidivismMap from '../components/RecidivismMap';
+import { MapContainer, TileLayer, CircleMarker, Popup, Polyline, LayersControl, LayerGroup, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
 
 function formatINR(amount) {
   if (amount >= 100000) return `₹${(amount / 100000).toFixed(1)}L`;
@@ -23,6 +23,21 @@ const SHIFT_BADGES = {
   Morning: 'bg-blue-500/10 text-blue-500 border border-blue-500/20',
   Evening: 'bg-purple-500/10 text-purple-500 border border-purple-500/20',
 };
+
+const BENGALURU_CENTER = [12.9716, 77.5946];
+
+function MapController({ selectedOfficer, officers }) {
+  const map = useMap();
+  useEffect(() => {
+    if (selectedOfficer) {
+      const officer = officers.find((o) => o.id === selectedOfficer);
+      if (officer && officer.lat && officer.lng) {
+        map.setView([officer.lat, officer.lng], 14, { animate: true });
+      }
+    }
+  }, [selectedOfficer, officers, map]);
+  return null;
+}
 
 export default function ShiftPlannerPage() {
   const [data, setData] = useState(null);
@@ -42,6 +57,21 @@ export default function ShiftPlannerPage() {
   const [allocations, setAllocations] = useState({}); // { "zone-slot": officerCount }
   const [toast, setToast] = useState(null);
 
+  // Real-Time Tactical Command States
+  const [activeTab, setActiveTab] = useState('strategic');
+  const [officers, setOfficers] = useState([]);
+  const [dispatchLogs, setDispatchLogs] = useState([]);
+  const [autoDispatch, setAutoDispatch] = useState(false);
+  const [autoDispatchLoading, setAutoDispatchLoading] = useState(false);
+  const [selectedOfficer, setSelectedOfficer] = useState(null);
+  const terminalEndRef = useRef(null);
+
+  useEffect(() => {
+    if (activeTab === 'tactical' && terminalEndRef.current) {
+      terminalEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [dispatchLogs, activeTab]);
+
   const poolLimit = 16; // 16 max officers available for scheduling
   const slots = useMemo(() => {
     return selectedShift === 'Morning'
@@ -52,12 +82,13 @@ export default function ShiftPlannerPage() {
   // Fetch shift planner data and other consolidated operational stats
   const loadShiftData = useCallback(async () => {
     try {
-      const [shRes, prRes, coRes, seRes, reRes] = await Promise.all([
+      const [shRes, prRes, coRes, seRes, reRes, offRes] = await Promise.all([
         api.getShiftPlanner(),
         api.getPredictions(),
         api.getCorridors(),
         api.getSeverityQueue(20),
-        api.getRecidivism()
+        api.getRecidivism(),
+        api.getOfficers()
       ]);
 
       const resData = shRes.data;
@@ -66,6 +97,9 @@ export default function ShiftPlannerPage() {
       setCorridors(coRes.data);
       setSeverity(seRes.data);
       setRecidivism(reRes.data);
+      setOfficers(offRes.data.officers || []);
+      setDispatchLogs(offRes.data.dispatch_logs || []);
+      setAutoDispatch(offRes.data.auto_dispatch || false);
       
       // Initialize allocations state matching initial recommendations
       const initial = {};
@@ -107,6 +141,9 @@ export default function ShiftPlannerPage() {
           generated_at: payload.timestamp,
         }));
       }
+      if (payload.officers) setOfficers(payload.officers);
+      if (payload.dispatch_logs) setDispatchLogs(payload.dispatch_logs);
+      if (payload.auto_dispatch !== undefined) setAutoDispatch(payload.auto_dispatch);
     }
   }, []);
 
@@ -222,6 +259,46 @@ export default function ShiftPlannerPage() {
     showToast('Deployment layout cleared.', 'info');
   };
 
+  const handleToggleAutoDispatch = async () => {
+    setAutoDispatchLoading(true);
+    try {
+      const res = await api.toggleAutoDispatch(!autoDispatch);
+      if (res.data.success) {
+        setAutoDispatch(res.data.auto_dispatch);
+        showToast(
+          `Auto-dispatch system is now ${res.data.auto_dispatch ? 'ENABLED' : 'DISABLED'}.`,
+          res.data.auto_dispatch ? 'success' : 'info'
+        );
+      } else {
+        showToast(res.data.error || 'Failed to toggle auto-dispatch', 'error');
+      }
+    } catch (err) {
+      showToast('Network error toggling auto-dispatch', 'error');
+    } finally {
+      setAutoDispatchLoading(false);
+    }
+  };
+
+  const handleManualDispatch = async (officerId, incident) => {
+    try {
+      const res = await api.dispatchOfficer({
+        officer_id: officerId,
+        target_lat: incident.latitude,
+        target_lng: incident.longitude,
+        zone: incident.zone,
+        incident_id: incident.violation_id,
+        vehicle_type: incident.vehicle_type
+      });
+      if (res.data.success) {
+        showToast(`Successfully dispatched ${officerId} to resolve incident in ${incident.zone}.`, 'success');
+      } else {
+        showToast(res.data.error || 'Failed to dispatch officer', 'error');
+      }
+    } catch (err) {
+      showToast('Network error during dispatch', 'error');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center text-gray-400">
@@ -275,42 +352,10 @@ export default function ShiftPlannerPage() {
         <div>
           <h2 className="text-xl font-bold text-gray-900 tracking-tight" style={{ fontFamily: "'Inter', sans-serif" }}>Interactive Patrol Dispatch Canvas</h2>
           <p className="mt-1 text-xs text-gray-400 font-medium" style={{ fontFamily: "'Inter', sans-serif" }}>
-            Drag, toggle, or auto-optimize officer patrols to protect active emergency corridors
+            Consolidated tactical command center and strategic resource planning for Bengaluru corridors
           </p>
         </div>
         <LiveStatusBar connected={connected} status={status} lastTick={lastTick} />
-      </div>
-
-      {/* KPI Cards Summary */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KPICard
-          title="Optimal Dispatch"
-          value={summary.total_officers_recommended || 0}
-          subtitle="Total recommended staff"
-          sparklineData={assignments.map((a) => a.officers_recommended || 0)}
-          variant="accent"
-        />
-        <KPICard
-          title="Economic Delay Risk"
-          value={formatINR(summary.total_economic_impact_inr)}
-          subtitle="Projected gridlock cost"
-          sparklineData={assignments.map((a) => a.economic_impact_inr || 0)}
-          variant="danger"
-        />
-        <KPICard
-          title="Critical Intersections"
-          value={summary.critical_zones || 0}
-          subtitle={`High priority: ${summary.high_priority_zones || 0}`}
-          sparklineData={assignments.map((a) => (a.priority === 'CRITICAL' ? 3 : a.priority === 'HIGH' ? 2 : 1))}
-          variant="warning"
-        />
-        <KPICard
-          title="Projected Violations"
-          value={summary.total_expected_violations || 0}
-          subtitle="Estimated offenses (24h)"
-          sparklineData={assignments.map((a) => a.expected_violations || 0)}
-          variant="default"
-        />
       </div>
 
       {/* Toast Alert Banner */}
@@ -327,7 +372,43 @@ export default function ShiftPlannerPage() {
         </div>
       )}
 
-      {/* Main Allocation Area — right after KPI cards */}
+      {/* KPI Cards Summary */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* KPI 1: Active Officers Fleet (Live) */}
+        <KPICard
+          title="Live Officers Fleet"
+          value={officers.length}
+          subtitle={`${officers.filter(o => o.status === 'PATROLLING').length} Patrolling · ${officers.filter(o => o.status === 'DISPATCHED').length} En Route`}
+          sparklineData={officers.map((_, i) => i + 1)}
+          variant="accent"
+        />
+        {/* KPI 2: Live Incidents Queue (Live) */}
+        <KPICard
+          title="Live Incidents"
+          value={(severity?.queue || []).length}
+          subtitle={`Critical: ${(severity?.queue || []).filter(i => i.severity === 'CRITICAL').length}`}
+          sparklineData={(severity?.queue || []).map(i => i.severity_score || 0)}
+          variant="danger"
+        />
+        {/* KPI 3: Planned Coverage (Strategic) */}
+        <KPICard
+          title="Planned Coverage"
+          value={`${complianceScore}%`}
+          subtitle={`${totalDeployed} of ${poolLimit} officers allocated`}
+          sparklineData={activeZones.map(z => slots.reduce((acc, slot) => acc + (allocations[`${z.zone}-${slot}`] || 0), 0))}
+          variant="warning"
+        />
+        {/* KPI 4: Economic Delay Risk (Strategic) */}
+        <KPICard
+          title="Economic Delay Risk"
+          value={formatINR(summary.total_economic_impact_inr)}
+          subtitle="Projected gridlock cost"
+          sparklineData={assignments.map((a) => a.economic_impact_inr || 0)}
+          variant="default"
+        />
+      </div>
+
+      {/* Interactive Shift Scheduler Section */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         
         {/* Left Side: Score Widget & Staff Deployed Pool (1 Col) */}
@@ -534,48 +615,458 @@ export default function ShiftPlannerPage() {
         </div>
       </div>
 
-      {/* Operational Briefs Section — below dispatch canvas */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <EnforcementBrief shiftData={data} predictions={predictions} corridors={corridors} />
-        <SeverityQueue data={severity} />
+      {/* Unified Tactical Workspace */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Left Side: Live Force Control, Active Officers List, Emergency Queue (1 Column) */}
+        <div className="lg:col-span-1 space-y-6 flex flex-col max-h-[700px]">
+          
+          {/* Live Force Telemetry & Control Panel */}
+          <div className="rounded-xl border border-command-border bg-command-panel p-4 shadow-sm space-y-3">
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900 dark:text-white">Live Force Telemetry & Control</h3>
+              <p className="text-[10px] text-gray-400">Manage real-time dispatch and automation</p>
+            </div>
+
+            <div className="flex items-center justify-between border-t border-command-border/20 pt-2 text-xs font-semibold">
+              <span className="text-gray-700 dark:text-gray-300 font-medium">AI Auto-Dispatcher</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleToggleAutoDispatch}
+                  disabled={autoDispatchLoading}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer focus:outline-none ${
+                    autoDispatch ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-800'
+                  } ${autoDispatchLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      autoDispatch ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+                <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded ${
+                  autoDispatch ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                }`}>
+                  {autoDispatch ? 'ACTIVE' : 'MANUAL'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Active Officer Fleet */}
+          <div className="rounded-xl border border-command-border bg-command-panel p-4 shadow-sm flex flex-col h-[280px]">
+            <div className="border-b border-command-border/40 pb-2 mb-2 flex-shrink-0">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900 dark:text-white">Active Officer Fleet</h3>
+              <p className="text-[10px] text-gray-400">Click a card to focus on the map</p>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1 no-scrollbar">
+              {officers.map((officer) => (
+                <div 
+                  key={officer.id} 
+                  className={`p-2.5 rounded-xl border transition-all duration-300 bg-command-bg/40 cursor-pointer ${
+                    selectedOfficer === officer.id 
+                      ? 'border-[#BA5A5A] ring-2 ring-[#BA5A5A]/20 bg-command-bg/85' 
+                      : 'border-command-border hover:border-gray-300 hover:bg-command-bg/60'
+                  }`}
+                  onClick={() => setSelectedOfficer(officer.id === selectedOfficer ? null : officer.id)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm">👮</span>
+                      <div>
+                        <h4 className="font-bold text-[11px] text-gray-900 dark:text-white leading-tight">{officer.name}</h4>
+                        <span className="text-[8px] font-mono text-gray-400">{officer.id}</span>
+                      </div>
+                    </div>
+                    <span className={`inline-flex items-center gap-0.5 text-[8px] font-extrabold px-1.5 py-0.5 rounded-full ${
+                      officer.status === 'IDLE' 
+                        ? 'bg-gray-100 text-gray-600 border border-gray-200'
+                        : officer.status === 'PATROLLING'
+                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 animate-pulse'
+                        : officer.status === 'DISPATCHED'
+                        ? 'bg-amber-50 text-amber-600 border border-amber-200 font-semibold'
+                        : 'bg-rose-50 text-rose-600 border border-rose-200 font-bold'
+                    }`}>
+                      {officer.status === 'PATROLLING' && <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />}
+                      {officer.status}
+                    </span>
+                  </div>
+                  
+                  <div className="mt-2 grid grid-cols-2 gap-1.5 text-[9px] border-t border-command-border/20 pt-1.5">
+                    <div>
+                      <span className="text-gray-400 font-medium block">Sector:</span>
+                      <span className="text-gray-800 dark:text-gray-200 font-bold">{officer.zone || 'Unknown'}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400 font-medium block">Coordinates:</span>
+                      <span className="text-gray-800 dark:text-gray-200 font-mono font-semibold">
+                        {officer.lat.toFixed(4)}, {officer.lng.toFixed(4)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {officer.assigned_incident_id && (
+                    <div className="mt-2 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 p-1.5 rounded-lg text-[9px] flex items-center justify-between text-rose-700 dark:text-rose-300">
+                      <span>Incident: <strong>{officer.assigned_incident_id}</strong> ({officer.incident_type || 'CAR'})</span>
+                      <span className="font-mono text-[8px] bg-rose-100 dark:bg-rose-900/50 px-1 rounded animate-pulse">ON SITE</span>
+                    </div>
+                  )}
+                  
+                  {officer.target_lat && officer.target_lng && officer.status === 'DISPATCHED' && (
+                    <div className="mt-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 p-1.5 rounded-lg text-[9px] flex items-center justify-between text-amber-700 dark:text-amber-300">
+                      <span>Heading to: <strong>{officer.zone}</strong></span>
+                      <span className="font-mono text-[8px] bg-amber-100 dark:bg-amber-900/50 px-1 rounded animate-pulse">EN ROUTE</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+              {officers.length === 0 && (
+                <div className="text-center text-xs text-gray-400 py-8">Initializing officer telemetry stream...</div>
+              )}
+            </div>
+          </div>
+
+          {/* Emergency Dispatch Queue */}
+          <div className="rounded-xl border border-command-border bg-command-panel p-4 shadow-sm flex flex-col h-[280px]">
+            <div className="border-b border-command-border/40 pb-2 mb-2 flex-shrink-0">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900 dark:text-white">Emergency Dispatch Queue</h3>
+              <p className="text-[10px] text-gray-400">Select an officer to manually assign to live incidents</p>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1 no-scrollbar">
+              {(severity?.queue || []).map((incident) => {
+                const isOnSite = officers.some(o => o.assigned_incident_id === incident.violation_id);
+                const isHeading = officers.some(o => o.status === 'DISPATCHED' && o.assigned_incident_id === incident.violation_id);
+
+                return (
+                  <div 
+                    key={incident.violation_id}
+                    className="flex flex-col gap-1.5 p-2.5 rounded-lg border border-command-border bg-command-bg/40 hover:bg-command-bg/60 transition-all text-xs"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${
+                          incident.severity === 'CRITICAL' 
+                            ? 'bg-command-danger/25 text-command-danger'
+                            : incident.severity === 'MEDIUM'
+                            ? 'bg-command-warning/25 text-command-warning'
+                            : 'bg-command-accent/25 text-command-accent'
+                        }`}>
+                          {incident.severity}
+                        </span>
+                        <span className="font-bold text-gray-900 dark:text-white">{incident.zone}</span>
+                      </div>
+                      
+                      <span className="font-mono text-[8px] text-gray-400">{incident.violation_id}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center text-[9px] text-gray-500">
+                      <span>Vehicle: <strong>{incident.vehicle_type}</strong> · Score {incident.severity_score}</span>
+                      <span>GPS: {incident.latitude?.toFixed(4)}, {incident.longitude?.toFixed(4)}</span>
+                    </div>
+
+                    {/* Dispatch actions row */}
+                    <div className="border-t border-command-border/10 pt-1.5 mt-1 flex justify-end">
+                      {autoDispatch ? (
+                        <span className="text-[8px] text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 flex items-center gap-0.5">
+                          🤖 AI Managed
+                        </span>
+                      ) : isOnSite ? (
+                        <span className="text-[8px] text-rose-600 dark:text-rose-400 font-bold bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20 flex items-center gap-0.5">
+                          👮 Officer Arrived
+                        </span>
+                      ) : isHeading ? (
+                        <span className="text-[8px] text-amber-600 dark:text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 flex items-center gap-0.5">
+                          ⚡ Dispatch Active
+                        </span>
+                      ) : (
+                        <select
+                          defaultValue=""
+                          onChange={(e) => {
+                            const offId = e.target.value;
+                            if (offId) {
+                              handleManualDispatch(offId, incident);
+                              e.target.value = ""; // reset
+                            }
+                          }}
+                          className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 rounded px-2 py-1 text-[9px] text-gray-800 dark:text-gray-200 outline-none cursor-pointer focus:border-[#BA5A5A]"
+                        >
+                          <option value="" disabled>Dispatch Fleet Officer...</option>
+                          {officers
+                            .filter(o => o.status === 'IDLE' || o.status === 'PATROLLING')
+                            .map(o => (
+                              <option key={o.id} value={o.id}>
+                                {o.name} ({o.status})
+                              </option>
+                            ))
+                          }
+                        </select>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              {(!severity?.queue || severity.queue.length === 0) && (
+                <div className="text-center text-xs text-gray-400 py-8">No active incidents in the emergency queue.</div>
+              )}
+            </div>
+          </div>
+
+        </div>
+
+        {/* Right Side: Large Map Viewport (2 Columns) */}
+        <div className="lg:col-span-2 rounded-xl border border-command-border bg-command-panel p-4 shadow-sm flex flex-col h-[600px] lg:h-[660px]">
+          <div className="border-b border-command-border/40 pb-2 mb-2 flex items-center justify-between flex-shrink-0">
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900 dark:text-white">Tactical Area Live Grid</h3>
+              <p className="text-[10px] text-gray-400">Interactive live telemetry tracking of officer beats and incident hotspots</p>
+            </div>
+            <div className="flex gap-2 text-[8px] font-extrabold uppercase">
+              <span className="flex items-center gap-0.5 text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 px-1 py-0.5 rounded">● Patrolling</span>
+              <span className="flex items-center gap-0.5 text-amber-500 bg-amber-500/10 border border-amber-500/20 px-1 py-0.5 rounded">● En Route</span>
+              <span className="flex items-center gap-0.5 text-rose-500 bg-rose-500/10 border border-rose-500/20 px-1 py-0.5 rounded">● On-Scene</span>
+            </div>
+          </div>
+
+          {/* Map viewport container */}
+          <div className="flex-1 rounded-lg overflow-hidden relative" style={{ minHeight: '350px' }}>
+            <MapContainer center={BENGALURU_CENTER} zoom={12} scrollWheelZoom={true} style={{ height: '100%' }}>
+              <LayersControl position="topright">
+                <LayersControl.BaseLayer checked name="Google Streets">
+                  <TileLayer
+                    attribution="&copy; Google Maps"
+                    url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+                  />
+                </LayersControl.BaseLayer>
+                <LayersControl.BaseLayer name="Dark Mode">
+                  <TileLayer
+                    attribution="&copy; CartoDB"
+                    url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                  />
+                </LayersControl.BaseLayer>
+
+                {/* Recidivism layer overlay */}
+                <LayersControl.Overlay checked name="Recidivism Hotspots">
+                  <LayerGroup>
+                    {(recidivism?.zones || []).map((zone) => (
+                      <CircleMarker
+                        key={`recidivism-${zone.zone}`}
+                        center={[zone.latitude, zone.longitude]}
+                        radius={12 + zone.recurrence_rate * 30}
+                        pathOptions={{
+                          color: zone.is_stubborn_zone ? '#A33B3B' : '#C0613F',
+                          fillColor: zone.is_stubborn_zone ? '#A33B3B' : '#C0613F',
+                          fillOpacity: 0.25,
+                          weight: 2,
+                          dashArray: '5, 5',
+                        }}
+                      >
+                        <Popup>
+                          <div className="text-xs p-1">
+                            <div className="font-bold text-gray-900">{zone.zone}</div>
+                            <div className="text-[10px] text-gray-400 mt-0.5">Recidivism Rate: {(zone.recurrence_rate * 100).toFixed(1)}%</div>
+                            <div className="mt-1 border-t pt-1 border-gray-100">
+                              {zone.is_stubborn_zone ? (
+                                <span className="text-rose-600 font-bold">⚠️ STUBBORN ZONE</span>
+                              ) : (
+                                <span className="text-amber-600 font-semibold">Monitor Corridor</span>
+                              )}
+                              <p className="mt-1 text-gray-600 font-medium">{zone.recommendation}</p>
+                            </div>
+                          </div>
+                        </Popup>
+                      </CircleMarker>
+                    ))}
+                  </LayerGroup>
+                </LayersControl.Overlay>
+              </LayersControl>
+
+              {/* Map Controller for selection centering */}
+              <MapController selectedOfficer={selectedOfficer} officers={officers} />
+
+              {/* Draw Polyline path for dispatched officers */}
+              {officers.map(officer => {
+                if (officer.status === 'DISPATCHED' && officer.lat && officer.lng && officer.target_lat && officer.target_lng) {
+                  return (
+                    <Polyline
+                      key={`path-${officer.id}`}
+                      positions={[
+                        [officer.lat, officer.lng],
+                        [officer.target_lat, officer.target_lng]
+                      ]}
+                      pathOptions={{
+                        color: '#F59E0B',
+                        dashArray: '5, 10',
+                        weight: 2
+                      }}
+                    />
+                  );
+                }
+                return null;
+              })}
+
+              {/* Draw Officers as CircleMarkers */}
+              {officers.map((officer) => {
+                if (!officer.lat || !officer.lng) return null;
+                const isSelected = selectedOfficer === officer.id;
+                let color = '#64748B'; // slate (IDLE)
+                if (officer.status === 'PATROLLING') color = '#10B981'; // emerald
+                if (officer.status === 'DISPATCHED') color = '#F59E0B'; // amber
+                if (officer.status === 'ON_SCENE') color = '#EF4444'; // rose
+
+                return (
+                  <CircleMarker
+                    key={`officer-${officer.id}`}
+                    center={[officer.lat, officer.lng]}
+                    radius={isSelected ? 13 : 9}
+                    pathOptions={{
+                      color: isSelected ? '#BA5A5A' : '#ffffff',
+                      fillColor: color,
+                      fillOpacity: 0.85,
+                      weight: isSelected ? 4 : 2,
+                    }}
+                  >
+                    <Popup>
+                      <div className="text-xs p-1">
+                        <div className="font-bold text-gray-900">{officer.name}</div>
+                        <div className="text-[10px] text-gray-400 font-mono mt-0.5">{officer.id} · {officer.status}</div>
+                        <div className="mt-1.5 border-t pt-1 border-gray-100">
+                          <div><strong>Location:</strong> {officer.zone || 'N/A'}</div>
+                          <div><strong>Coordinates:</strong> {officer.lat.toFixed(4)}, {officer.lng.toFixed(4)}</div>
+                          {officer.assigned_incident_id && (
+                            <div className="mt-1 text-rose-600 font-medium">Resolving violation {officer.assigned_incident_id}</div>
+                          )}
+                        </div>
+                      </div>
+                    </Popup>
+                  </CircleMarker>
+                );
+              })}
+
+              {/* Draw Incidents as Warning Circles */}
+              {(severity?.queue || []).map((incident) => {
+                if (!incident.latitude || !incident.longitude) return null;
+
+                let color = '#3B82F6'; // blue (LOW)
+                if (incident.severity === 'CRITICAL') color = '#EF4444'; // red
+                if (incident.severity === 'MEDIUM') color = '#F59E0B'; // amber
+
+                return (
+                  <CircleMarker
+                    key={`incident-${incident.violation_id}`}
+                    center={[incident.latitude, incident.longitude]}
+                    radius={8}
+                    pathOptions={{
+                      color: '#ffffff',
+                      fillColor: color,
+                      fillOpacity: 0.75,
+                      weight: 1,
+                    }}
+                  >
+                    <Popup>
+                      <div className="text-xs p-1">
+                        <div className="font-bold text-gray-900">{incident.zone} ({incident.vehicle_type})</div>
+                        <div className="text-[10px] text-gray-400 font-mono mt-0.5">Violation ID: {incident.violation_id}</div>
+                        <div className="mt-1 border-t pt-1 border-gray-100">
+                          <div><strong>Severity:</strong> <span className="font-bold">{incident.severity}</span> (Score: {incident.severity_score})</div>
+                          <div><strong>Coordinates:</strong> {incident.latitude.toFixed(4)}, {incident.longitude.toFixed(4)}</div>
+                          
+                          {/* Quick Dispatch Action from map popover if manual */}
+                          {!autoDispatch && (
+                            <div className="mt-2 pt-1 border-t border-dashed flex flex-col gap-1">
+                              <span className="text-[9px] text-gray-400 uppercase font-bold">Quick Dispatch:</span>
+                              <div className="flex flex-wrap gap-1">
+                                {officers
+                                  .filter(o => o.status === 'IDLE' || o.status === 'PATROLLING')
+                                  .map(o => (
+                                    <button
+                                      key={o.id}
+                                      onClick={() => handleManualDispatch(o.id, incident)}
+                                      className="bg-[#BA5A5A] text-white text-[9px] font-bold px-1.5 py-0.5 rounded hover:opacity-90 active:scale-95 transition-all cursor-pointer"
+                                    >
+                                      {o.id.replace('OFF-', 'OFF ')}
+                                    </button>
+                                  ))
+                                }
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </Popup>
+                  </CircleMarker>
+                );
+              })}
+            </MapContainer>
+          </div>
+        </div>
       </div>
 
-      <RecidivismMap data={recidivism} />
-
-      {/* Deployment Protocol Brief */}
-      <div className="rounded-xl border border-gray-200 dark:border-white/10 bg-command-panel p-6">
-        <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-4 border-b border-gray-200 dark:border-white/10 pb-2">Force Deployment Standard Protocols</h3>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 text-xs">
-          <div className="rounded-xl bg-gray-50 dark:bg-gray-900 p-4 border border-gray-200 dark:border-white/10">
-            <span className="rounded bg-command-danger/25 px-2 py-0.5 text-command-danger font-bold text-[9px] border border-command-danger/30">
-              🚨 3-4 OFFICERS (CRITICAL)
-            </span>
-            <p className="mt-2 text-gray-900 dark:text-white font-bold text-sm">Escort & Towing Unit</p>
-            <p className="mt-1 text-xs text-gray-700 dark:text-gray-300 leading-relaxed">Assigned to high-density bottlenecks. Officers run continuous rotations, relcoating double-parked vehicles to cleared lots.</p>
+      {/* Scrolling System Command Terminal */}
+      <div className="rounded-xl border border-[#334155] bg-[#0F172A] p-4 shadow-inner flex flex-col h-40">
+        <div className="flex items-center justify-between border-b border-[#334155] pb-2 mb-2 flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+            <span className="font-mono text-xs text-gray-400 font-bold uppercase tracking-wider">Telemetry Dispatch Feed</span>
           </div>
+          <span className="font-mono text-[9px] text-gray-500 font-bold">READY</span>
+        </div>
 
-          <div className="rounded-xl bg-gray-50 dark:bg-gray-900 p-4 border border-gray-200 dark:border-white/10">
-            <span className="rounded bg-command-warning/25 px-2 py-0.5 text-command-warning font-bold text-[9px] border border-command-warning/30">
-              👮 2 OFFICERS (HIGH)
-            </span>
-            <p className="mt-2 text-gray-900 dark:text-white font-bold text-sm">Wheel-Clamping Patrol</p>
-            <p className="mt-1 text-xs text-gray-700 dark:text-gray-300 leading-relaxed">Rotational clamps deployed for sidewalk obstruction. Spot-challans issued automatically with camera evidence feeds.</p>
-          </div>
+        <div className="flex-1 overflow-y-auto font-mono text-[10px] text-[#38BDF8] space-y-1 pr-2 no-scrollbar">
+          {dispatchLogs.map((log, idx) => {
+            let textClass = 'text-[#38BDF8]';
+            if (log.message.includes('AUTO-DISPATCH')) {
+              textClass = 'text-emerald-400 font-bold';
+            } else if (log.message.includes('DISPATCH:')) {
+              textClass = 'text-amber-400 font-bold';
+            } else if (log.message.includes('arrived at scene') || log.message.includes('cleared')) {
+              textClass = 'text-white/95 font-semibold';
+            } else if (log.message.includes('SYSTEM:')) {
+              textClass = 'text-purple-400';
+            }
 
-          <div className="rounded-xl bg-gray-50 dark:bg-gray-900 p-4 border border-gray-200 dark:border-white/10">
-            <span className="rounded bg-[#F9EDED] dark:bg-[#BA5A5A]/10 px-2 py-0.5 text-[#BA5A5A] font-bold text-[9px] border border-[#BA5A5A]/30">
-              👮 1 OFFICER (MEDIUM)
-            </span>
-            <p className="mt-2 text-gray-900 dark:text-white font-bold text-sm">Inspection Loop</p>
-            <p className="mt-1 text-xs text-gray-700 dark:text-gray-300 leading-relaxed">Routine patrol drive-by every 2 hours to clear lane-splitting or wrong-side parking and keep junctions fluid.</p>
-          </div>
+            return (
+              <div key={idx} className={textClass}>
+                {log.message}
+              </div>
+            );
+          })}
+          <div ref={terminalEndRef} />
+        </div>
+      </div>
 
-          <div className="rounded-xl bg-gray-50 dark:bg-gray-900 p-4 border border-gray-200 dark:border-white/10">
-            <span className="rounded bg-gray-500/10 px-2 py-0.5 text-gray-500 font-bold text-[9px] border border-gray-500/20">
-              — 0 OFFICERS (LOW)
-            </span>
-            <p className="mt-2 text-gray-900 dark:text-white font-bold text-sm">CCTV Telemetry Only</p>
-            <p className="mt-1 text-xs text-gray-700 dark:text-gray-300 leading-relaxed">No physical officer footprint on location. The corridor is monitored using computer vision edge nodes.</p>
+      {/* Operational Briefs & Protocols Section */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <EnforcementBrief shiftData={data} predictions={predictions} corridors={corridors} />
+        
+        {/* Force Deployment Standard Protocols */}
+        <div className="rounded-xl border border-gray-200 dark:border-white/10 bg-command-panel p-6 flex flex-col justify-between">
+          <div>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-4 border-b border-gray-200 dark:border-white/10 pb-2">Force Deployment Standard Protocols</h3>
+            <div className="space-y-3">
+              <div className="flex items-start gap-3 rounded-lg bg-gray-50 dark:bg-gray-900 p-3 border border-gray-200 dark:border-white/5">
+                <span className="rounded bg-command-danger/25 px-1.5 py-0.5 text-command-danger font-extrabold text-[8px] border border-command-danger/30 whitespace-nowrap mt-0.5">3-4 STAFF</span>
+                <div>
+                  <h4 className="font-bold text-gray-900 dark:text-white text-xs">Critical Escort & Towing Unit</h4>
+                  <p className="text-gray-500 text-[11px] mt-0.5">Assigned to high-density bottlenecks. Continuous rotations to clear lanes.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 rounded-lg bg-gray-50 dark:bg-gray-900 p-3 border border-gray-200 dark:border-white/5">
+                <span className="rounded bg-command-warning/25 px-1.5 py-0.5 text-command-warning font-extrabold text-[8px] border border-command-warning/30 whitespace-nowrap mt-0.5">2 STAFF</span>
+                <div>
+                  <h4 className="font-bold text-gray-900 dark:text-white text-xs">Wheel-Clamping Patrol</h4>
+                  <p className="text-gray-500 text-[11px] mt-0.5">Rotational clamps deployed for sidewalk obstruction with camera evidence.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 rounded-lg bg-gray-50 dark:bg-gray-900 p-3 border border-gray-200 dark:border-white/5">
+                <span className="rounded bg-[#F9EDED] dark:bg-[#BA5A5A]/10 px-1.5 py-0.5 text-[#BA5A5A] font-extrabold text-[8px] border border-[#BA5A5A]/30 whitespace-nowrap mt-0.5">1 STAFF</span>
+                <div>
+                  <h4 className="font-bold text-gray-900 dark:text-white text-xs">Junction Inspection Loop</h4>
+                  <p className="text-gray-500 text-[11px] mt-0.5">Routine drive-by checks every 2 hours to clear lane splitting.</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

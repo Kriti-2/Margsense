@@ -55,11 +55,11 @@ def get_current_user(
     db: Session = Depends(get_db),
 ) -> User:
     settings = get_settings()
-    if credentials:
-        return _user_from_token(credentials, db)
-
     if not settings.auth_enabled:
         return _dev_officer()
+
+    if credentials:
+        return _user_from_token(credentials, db)
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -73,14 +73,14 @@ def get_optional_user(
     db: Session = Depends(get_db),
 ) -> User | None:
     settings = get_settings()
+    if not settings.auth_enabled:
+        return _dev_officer()
+
     if credentials:
         try:
             return _user_from_token(credentials, db)
         except HTTPException:
             return None
-
-    if not settings.auth_enabled:
-        return _dev_officer()
 
     return None
 

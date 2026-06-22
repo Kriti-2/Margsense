@@ -118,11 +118,14 @@ def build_shift_planner_response(df: pd.DataFrame, predictions: ForecastResponse
                         lane_width_m=BENGALURU_ZONES.get(zone, {}).get("lane_width_m", 7.0),
                         hour=int(hour),
                         near_intersection=bool(row.get("near_intersection", False)),
+                        latitude=float(row["latitude"]) if pd.notna(row.get("latitude")) else None,
+                        longitude=float(row["longitude"]) if pd.notna(row.get("longitude")) else None,
                         violation_types=row.get("violation_types", []),
                     ),
                     weather_severity_boost=weather_severity_boost,
                 )
             )
+
 
     planner = ShiftPlannerService()
     assignments = planner.plan(predictions, economic_losses, severity_results)

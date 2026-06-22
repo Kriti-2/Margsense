@@ -29,6 +29,201 @@ class RealtimeEngine:
     def __init__(self):
         self._settings = get_settings()
         self._last_tick: dict[str, Any] = {}
+        self._auto_dispatch = False
+        self._dispatch_logs = [
+            {"timestamp": datetime.now(timezone.utc).isoformat(), "message": "Command center initialized. Telemetry channels online."}
+        ]
+        self._officers = [
+            {
+                "id": "OFF-01",
+                "name": "Officer Ramesh Kumar",
+                "status": "IDLE",
+                "zone": "Koramangala",
+                "lat": 12.9352,
+                "lng": 77.6245,
+                "target_lat": None,
+                "target_lng": None,
+                "assigned_incident_id": None,
+                "incident_type": None,
+                "ticks_on_scene": 0
+            },
+            {
+                "id": "OFF-02",
+                "name": "Officer Priya Singh",
+                "status": "PATROLLING",
+                "zone": "Indiranagar",
+                "lat": 12.9784,
+                "lng": 77.6408,
+                "target_lat": None,
+                "target_lng": None,
+                "assigned_incident_id": None,
+                "incident_type": None,
+                "ticks_on_scene": 0
+            },
+            {
+                "id": "OFF-03",
+                "name": "Officer S. Ananth",
+                "status": "IDLE",
+                "zone": "MG Road",
+                "lat": 12.9750,
+                "lng": 77.6063,
+                "target_lat": None,
+                "target_lng": None,
+                "assigned_incident_id": None,
+                "incident_type": None,
+                "ticks_on_scene": 0
+            },
+            {
+                "id": "OFF-04",
+                "name": "Officer Sandeep Patel",
+                "status": "PATROLLING",
+                "zone": "HSR Layout",
+                "lat": 12.9116,
+                "lng": 77.6473,
+                "target_lat": None,
+                "target_lng": None,
+                "assigned_incident_id": None,
+                "incident_type": None,
+                "ticks_on_scene": 0
+            },
+            {
+                "id": "OFF-05",
+                "name": "Officer K. Preethi",
+                "status": "IDLE",
+                "zone": "Whitefield",
+                "lat": 12.9698,
+                "lng": 77.7500,
+                "target_lat": None,
+                "target_lng": None,
+                "assigned_incident_id": None,
+                "incident_type": None,
+                "ticks_on_scene": 0
+            }
+        ]
+
+    def _simulate_officers(self):
+        import math
+        buffer = get_live_buffer()
+        ts_str = datetime.now().strftime("%H:%M:%S")
+        step = 0.0015
+
+        for officer in self._officers:
+            status = officer["status"]
+            if status == "DISPATCHED" and officer["target_lat"] is not None and officer["target_lng"] is not None:
+                d_lat = officer["target_lat"] - officer["lat"]
+                d_lng = officer["target_lng"] - officer["lng"]
+                dist = math.sqrt(d_lat**2 + d_lng**2)
+                
+                if dist < 0.0012:
+                    officer["lat"] = officer["target_lat"]
+                    officer["lng"] = officer["target_lng"]
+                    officer["status"] = "ON_SCENE"
+                    officer["ticks_on_scene"] = 2
+                    self._dispatch_logs.append({
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "message": f"[{ts_str}] TELEMETRY: {officer['name']} arrived at scene in {officer['zone']}."
+                    })
+                else:
+                    ratio = step / dist if dist > step else 1.0
+                    officer["lat"] += d_lat * ratio
+                    officer["lng"] += d_lng * ratio
+            
+            elif status == "ON_SCENE":
+                officer["ticks_on_scene"] -= 1
+                if officer["ticks_on_scene"] <= 0:
+                    incident_id = officer["assigned_incident_id"]
+                    if incident_id:
+                        resolved = buffer.resolve(incident_id)
+                        msg = f"[{ts_str}] SYSTEM: Violation {incident_id} cleared by {officer['name']}." if resolved else f"[{ts_str}] SYSTEM: Violation {incident_id} cleared (no longer in queue)."
+                        self._dispatch_logs.append({
+                            "timestamp": datetime.now(timezone.utc).isoformat(),
+                            "message": msg
+                        })
+                    else:
+                        self._dispatch_logs.append({
+                            "timestamp": datetime.now(timezone.utc).isoformat(),
+                            "message": f"[{ts_str}] SYSTEM: Patrol target in {officer['zone']} cleared by {officer['name']}."
+                        })
+                    
+                    officer["status"] = "PATROLLING"
+                    officer["target_lat"] = None
+                    officer["target_lng"] = None
+                    officer["assigned_incident_id"] = None
+                    officer["incident_type"] = None
+                    
+            elif status == "PATROLLING":
+                from app.utilities.constants import BENGALURU_ZONES
+                import random
+                zone_info = BENGALURU_ZONES.get(officer["zone"])
+                if zone_info:
+                    center = zone_info["center"]
+                    target_lat = center[0] + random.uniform(-0.005, 0.005)
+                    target_lng = center[1] + random.uniform(-0.005, 0.005)
+                    
+                    d_lat = target_lat - officer["lat"]
+                    d_lng = target_lng - officer["lng"]
+                    dist = math.sqrt(d_lat**2 + d_lng**2)
+                    if dist > 0.0001:
+                        ratio = (step * 0.5) / dist
+                        officer["lat"] += d_lat * ratio
+                        officer["lng"] += d_lng * ratio
+
+    def _check_auto_dispatch(self, recent_violations):
+        if not self._auto_dispatch:
+            return
+        
+        assigned_incidents = {
+            o["assigned_incident_id"] for o in self._officers if o["assigned_incident_id"]
+        }
+        ts_str = datetime.now().strftime("%H:%M:%S")
+        
+        for _, row in recent_violations.iterrows():
+            v_id = str(row.get("id"))
+            if v_id in assigned_incidents:
+                continue
+                
+            v_lat = row.get("latitude")
+            v_lng = row.get("longitude")
+            v_zone = row.get("zone", "Unknown")
+            v_vehicle = row.get("vehicle_type", "CAR")
+            
+            if pd.isna(v_lat) or pd.isna(v_lng):
+                continue
+                
+            best_officer = None
+            min_dist = float("inf")
+            
+            for officer in self._officers:
+                if officer["status"] not in ("IDLE", "PATROLLING"):
+                    continue
+                
+                import math
+                lat1, lon1, lat2, lon2 = officer["lat"], officer["lng"], v_lat, v_lng
+                R = 6371000
+                phi1 = math.radians(lat1)
+                phi2 = math.radians(lat2)
+                dphi = math.radians(lat2 - lat1)
+                dlambda = math.radians(lon2 - lon1)
+                a = math.sin(dphi/2)**2 + math.cos(phi1)*math.cos(phi2)*math.sin(dlambda/2)**2
+                dist = 2 * R * math.atan2(math.sqrt(a), math.sqrt(1-a))
+                
+                if dist < min_dist:
+                    min_dist = dist
+                    best_officer = officer
+            
+            if best_officer:
+                best_officer["status"] = "DISPATCHED"
+                best_officer["target_lat"] = float(v_lat)
+                best_officer["target_lng"] = float(v_lng)
+                best_officer["assigned_incident_id"] = v_id
+                best_officer["zone"] = v_zone
+                best_officer["incident_type"] = v_vehicle
+                
+                self._dispatch_logs.append({
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "message": f"[{ts_str}] AUTO-DISPATCH: Assigned {best_officer['name']} to resolve {v_vehicle} violation {v_id} in {v_zone} ({min_dist:.0f}m away)."
+                })
+                assigned_incidents.add(v_id)
 
     def get_fallback_tick(self) -> dict[str, Any]:
         ts = datetime.now(timezone.utc)
@@ -110,6 +305,13 @@ class RealtimeEngine:
             new_violations.append(manual_violation)
 
         recent = self.recent_window(hours=24)
+        
+        # Simulate officer patrol/response movements
+        self._simulate_officers()
+        
+        # Run auto dispatch logic if active
+        self._check_auto_dispatch(recent)
+
         speeds = _traffic_service.get_zone_speeds(recent)
 
         engine = CongestionFingerprintEngine()
@@ -172,6 +374,9 @@ class RealtimeEngine:
                 }
                 for v in new_violations
             ],
+            "officers": self._officers,
+            "dispatch_logs": self._dispatch_logs[-50:],
+            "auto_dispatch": self._auto_dispatch,
         }
 
         # Attach weather data to live tick

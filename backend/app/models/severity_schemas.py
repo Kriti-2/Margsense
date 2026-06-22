@@ -28,3 +28,6 @@ class ViolationSeverityResult(BaseModel):
     severity: SeverityLevel
     severity_score: float = Field(..., ge=0, le=100)
     factors: dict[str, float | bool | str | int]
+    latitude: float | None = None
+    longitude: float | None = None
+

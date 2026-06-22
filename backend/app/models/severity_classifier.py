@@ -55,7 +55,10 @@ class ViolationSeverityClassifier:
                 "violation_count": len(data.violation_types),
                 "weather_boost": round(weather_severity_boost, 2),
             },
+            latitude=data.latitude,
+            longitude=data.longitude,
         )
+
 
     def classify_batch(self, items: list[ViolationSeverityInput], weather_severity_boost: float = 0.0) -> list[ViolationSeverityResult]:
         return [self.classify(item, weather_severity_boost=weather_severity_boost) for item in items]

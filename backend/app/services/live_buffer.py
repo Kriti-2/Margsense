@@ -92,6 +92,14 @@ class LiveViolationBuffer:
                 "replay_pool_size": len(self._replay_pool),
             }
 
+    def resolve(self, violation_id: str) -> bool:
+        with self._lock:
+            for r in list(self._rows):
+                if r.get("id") == violation_id:
+                    self._rows.remove(r)
+                    return True
+        return False
+
 
 def get_live_buffer() -> LiveViolationBuffer:
     return LiveViolationBuffer()
