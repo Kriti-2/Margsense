@@ -387,16 +387,11 @@ export default function DigitalTwinMap({
       if (trafficMode === 'static') {
         mapRef.current.setPaintProperty('traffic-flows-core', 'line-dasharray', [4, 4]);
         mapRef.current.setPaintProperty('traffic-flows-glow', 'line-dasharray', [4, 4]);
-        mapRef.current.setPaintProperty('traffic-flows-core', 'line-dashoffset', 0);
       } else if (trafficMode === 'particles') {
         mapRef.current.setPaintProperty('traffic-flows-core', 'line-dasharray', [1, 0]);
         mapRef.current.setPaintProperty('traffic-flows-glow', 'line-dasharray', [1, 0]);
-        mapRef.current.setPaintProperty('traffic-flows-core', 'line-dashoffset', 0);
       } else if (trafficMode === 'trails') {
-        // Set a static dash array for trails and reset offset
-        mapRef.current.setPaintProperty('traffic-flows-core', 'line-dasharray', [6, 4]);
         mapRef.current.setPaintProperty('traffic-flows-glow', 'line-dasharray', [1, 0]);
-        mapRef.current.setPaintProperty('traffic-flows-core', 'line-dashoffset', 0);
       }
     }
   }, [trafficMode, isLoaded]);
@@ -455,7 +450,7 @@ export default function DigitalTwinMap({
     if (trafficMode !== 'trails') return;
 
     let animFrame;
-    let offset = 0;
+    let step = 0;
     let lastTime = performance.now();
 
     const animate = (time) => {
@@ -466,10 +461,15 @@ export default function DigitalTwinMap({
       if (elapsed >= 33) {
         lastTime = time;
         const deltaMultiplier = elapsed / 16.67;
-        offset = (offset - 0.3 * deltaMultiplier) % 40;
+        step = (step + 0.35 * deltaMultiplier) % 12;
         
         if (mapRef.current.getLayer('traffic-flows-core') && showTraffic) {
-          mapRef.current.setPaintProperty('traffic-flows-core', 'line-dashoffset', offset);
+          mapRef.current.setPaintProperty('traffic-flows-core', 'line-dasharray', [
+            Math.max(0.1, 4 - step),
+            step,
+            Math.max(0.1, step),
+            12 - step
+          ]);
         }
       }
       
