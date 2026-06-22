@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, useMemo, lazy, Suspense } from 'react
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
 import { api } from '../api/client';
 import { useLiveFeed } from '../hooks/useLiveFeed';
-import HeatMap from '../components/HeatMap';
+const HeatMap = lazy(() => import('../components/HeatMap'));
 const DigitalTwinMap = lazy(() => import('../components/DigitalTwinMap'));
 import ShiftPlanner from '../components/ShiftPlanner';
 
@@ -699,7 +699,7 @@ export default function Predict() {
               className={`px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
                 mapView === '2d'
                   ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-450 hover:text-gray-700'
+                  : 'text-gray-400 hover:text-gray-700'
               }`}
             >
               2D Heatmap
@@ -708,7 +708,7 @@ export default function Predict() {
               onClick={() => setMapView('3d')}
               className={`px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
                 mapView === '3d'
-                  ? 'bg-white text-gray-950 shadow-sm'
+                  ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-450 hover:text-gray-700'
               }`}
             >

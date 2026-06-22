@@ -312,6 +312,8 @@ def get_traffic_routes():
     """
     Get 3D traffic route segments for Bengaluru, colored by congestion.
     """
+    import json
+    import os
     from app.services.traffic_service import TrafficService
     from app.services.realtime_engine import get_realtime_engine
     
@@ -391,6 +393,16 @@ def get_traffic_routes():
         ]),
     ]
     
+    # Try to load snapped routes from JSON file
+    snapped_routes = {}
+    cache_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "snapped_routes.json")
+    if os.path.exists(cache_path):
+        try:
+            with open(cache_path, "r") as f:
+                snapped_routes = json.load(f)
+        except Exception:
+            pass
+            
     features = []
     for idx, (z1, z2, waypoints) in enumerate(roads):
         # Calculate speed drops in connected zones
@@ -406,30 +418,37 @@ def get_traffic_routes():
         avg_drop = (drop1 + drop2) / 2
         avg_speed = (speed1 + speed2) / 2
         
-        if avg_drop >= 50:
+        if avg_drop >= 75:
             congestion = "high"
             color = "#FF3B30"  # Vibrant Neon Red
+        elif avg_drop >= 50:
+            congestion = "high"
+            color = "#FF9500"  # Vibrant Neon Orange
         elif avg_drop >= 25:
             congestion = "medium"
-            color = "#FF9500"  # Vibrant Neon Orange
+            color = "#FFCC00"  # Vibrant Neon Gold/Yellow
         else:
             congestion = "low"
-            color = "#34C759"  # Vibrant Neon Green
+            color = "#10B981"  # Vibrant Neon Emerald Green
             
-        # Flip to [lon, lat] for Mapbox GeoJSON spec and interpolate points to increase waypoint resolution
-        coords = []
-        for i in range(len(waypoints) - 1):
-            p1 = waypoints[i]
-            p2 = waypoints[i + 1]
-            coords.append([p1[1], p1[0]])  # Flip to [lon, lat]
-            # Add 2 intermediate points between each pair to smooth out the road curves
-            for step in range(1, 3):
-                frac = step / 3
-                lat = p1[0] + (p2[0] - p1[0]) * frac
-                lng = p1[1] + (p2[1] - p1[1]) * frac
-                coords.append([lng, lat])
-        if waypoints:
-            coords.append([waypoints[-1][1], waypoints[-1][0]])
+        route_key = f"{z1} - {z2}"
+        if route_key in snapped_routes:
+            coords = snapped_routes[route_key]
+        else:
+            # Flip to [lon, lat] for Mapbox GeoJSON spec and interpolate points to increase waypoint resolution
+            coords = []
+            for i in range(len(waypoints) - 1):
+                p1 = waypoints[i]
+                p2 = waypoints[i + 1]
+                coords.append([p1[1], p1[0]])  # Flip to [lon, lat]
+                # Add 2 intermediate points between each pair to smooth out the road curves
+                for step in range(1, 3):
+                    frac = step / 3
+                    lat = p1[0] + (p2[0] - p1[0]) * frac
+                    lng = p1[1] + (p2[1] - p1[1]) * frac
+                    coords.append([lng, lat])
+            if waypoints:
+                coords.append([waypoints[-1][1], waypoints[-1][0]])
         
         features.append({
             "type": "Feature",
@@ -439,7 +458,7 @@ def get_traffic_routes():
                 "coordinates": coords
             },
             "properties": {
-                "route_name": f"{z1} - {z2}",
+                "route_name": route_key,
                 "congestion_level": congestion,
                 "color": color,
                 "current_speed_kmh": round(avg_speed, 1),
