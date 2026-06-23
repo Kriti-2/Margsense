@@ -1,8 +1,75 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 const BENGALURU_CENTER = [77.5946, 12.9716]; // [lng, lat] for MapLibre
+
+// Deterministic hash helper to generate consistent building metrics based on location
+const getDeterministicHash = (lng, lat) => {
+  const str = `${lng.toFixed(5)},${lat.toFixed(5)}`;
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+};
+
+// Generates building intelligence details deterministically
+const generateBuildingDetails = (lng, lat, height = 15) => {
+  const hash = getDeterministicHash(lng, lat);
+  
+  // Landmark matching based on proximity
+  const landmarks = [
+    { name: 'UB City Tower', type: 'Commercial Complex', coords: [77.5982, 12.9721] },
+    { name: 'The Forum Mall', type: 'Shopping Mall', coords: [77.6180, 12.9348] },
+    { name: 'Manyata Tech Park - Block G', type: 'Office/Tech Park', coords: [77.6225, 13.0450] },
+    { name: 'RMZ Ecospace - Building 3A', type: 'Office/Tech Park', coords: [77.6762, 12.9264] },
+    { name: 'Garuda Mall', type: 'Shopping Mall', coords: [77.6090, 12.9702] },
+    { name: 'Commercial Plaza Block A', type: 'Commercial Complex', coords: [77.6245, 12.9352] }, // near Koramangala
+    { name: 'HSR Business Center', type: 'Office Tower', coords: [77.6473, 12.9116] }, // near HSR
+    { name: 'Indiranagar Metro Arcade', type: 'Commercial/Transit', coords: [77.6408, 12.9784] }, // near Indiranagar
+    { name: 'MG Road Plaza', type: 'Shopping & Retail', coords: [77.6063, 12.9750] } // near MG Road
+  ];
+
+  // Find nearest landmark if distance < ~300 meters (0.003 degrees approx)
+  const nearest = landmarks.find(l => {
+    const dLng = Math.abs(l.coords[0] - lng);
+    const dLat = Math.abs(l.coords[1] - lat);
+    return dLng < 0.003 && dLat < 0.003;
+  });
+
+  const prefixes = ['Commercial Center', 'Tech Corporate Plaza', 'Vibrant Square Suite', 'Silicon Heights', 'Apex Office Tower', 'Emerald Mall & Suites', 'Prestige Business Hub', 'Century Trade Tower'];
+  const classifications = ['Commercial Complex', 'Office / Tech Tower', 'Retail & Shopping Hub', 'Business Park Block', 'Mixed-use Highrise', 'Administrative Block'];
+  
+  const rawHeight = height || (12 + (hash % 38));
+  const estimatedFloors = Math.max(1, Math.round(rawHeight / 3.5));
+  
+  const name = nearest ? nearest.name : `${prefixes[hash % prefixes.length]} ${String.fromCharCode(65 + (hash % 6))}`;
+  const classification = nearest ? nearest.type : classifications[hash % classifications.length];
+  
+  const congestionIndex = 15 + (hash % 81); // 15% to 95%
+  const parkingCapacity = 80 + (hash % 19) * 40; // 80 to 800 slots
+  const weeklyCitations = Math.round((congestionIndex / 100) * (hash % 45) + 2);
+  
+  let priority = 'LOW';
+  if (congestionIndex >= 75) priority = 'CRITICAL';
+  else if (congestionIndex >= 50) priority = 'HIGH';
+  else if (congestionIndex >= 25) priority = 'MEDIUM';
+
+  return {
+    name,
+    type: classification,
+    height: Math.round(rawHeight),
+    floors: estimatedFloors,
+    congestionIndex,
+    parkingCapacity,
+    weeklyCitations,
+    priority,
+    lng,
+    lat
+  };
+};
 
 // Helper to map bright neon colors to professional muted dark-mode palette
 const muteColor = (color) => {
@@ -73,11 +140,39 @@ export default function DigitalTwinMap({
   const [showBuildings, setShowBuildings] = useState(true);
   const [cyberTheme, setCyberTheme] = useState('night'); // 'night', 'sunset', or 'matrix'
   const [settingsExpanded, setSettingsExpanded] = useState(false);
+  const [selectedBuildingId, setSelectedBuildingId] = useState(null);
+  const [selectedBuildingDetails, setSelectedBuildingDetails] = useState(null);
 
   // Optimizations & visual categorization controls
   const [trafficMode, setTrafficMode] = useState('particles'); // 'particles', 'trails', or 'static'
   const [legendTab, setLegendTab] = useState('congestion'); // 'congestion' or 'violations'
   const vehiclesRef = useRef([]);
+
+  // Weather data fetching
+  const [weatherData, setWeatherData] = useState(null);
+  const [hudExpanded, setHudExpanded] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    async function fetchWeather() {
+      try {
+        const response = await fetch('/api/weather');
+        if (response.ok && active) {
+          const data = await response.json();
+          setWeatherData(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch real-time Bengaluru weather:', err);
+      }
+    }
+    fetchWeather();
+    // Poll weather every 5 minutes to keep it updated
+    const interval = setInterval(fetchWeather, 300000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   // Initialize MapLibre Map
   useEffect(() => {
@@ -125,6 +220,22 @@ export default function DigitalTwinMap({
           'fill-extrusion-height': ['get', 'render_height'],
           'fill-extrusion-base': ['get', 'render_min_height'],
           'fill-extrusion-opacity': 0.75
+        }
+      });
+
+      // Add 3D buildings highlight layer
+      map.addLayer({
+        'id': '3d-buildings-highlight',
+        'source': 'openmaptiles',
+        'source-layer': 'building',
+        'type': 'fill-extrusion',
+        'minzoom': 11,
+        'filter': ['==', ['id'], ''], // default to none
+        'paint': {
+          'fill-extrusion-color': '#06B6D4', // cyan-500
+          'fill-extrusion-height': ['get', 'render_height'],
+          'fill-extrusion-base': ['get', 'render_min_height'],
+          'fill-extrusion-opacity': 0.95
         }
       });
 
@@ -326,6 +437,68 @@ export default function DigitalTwinMap({
         map.getCanvas().style.cursor = '';
         popupRef.current.remove();
       });
+
+      // Interactivity: 3D Buildings Hover
+      map.on('mouseenter', '3d-buildings', (e) => {
+        if (map.getLayoutProperty('3d-buildings', 'visibility') === 'none') return;
+        map.getCanvas().style.cursor = 'pointer';
+
+        const feature = e.features[0];
+        const height = feature.properties?.render_height || 12;
+        const floors = Math.max(1, Math.round(height / 3.5));
+
+        popupRef.current
+          .setLngLat(e.lngLat)
+          .setHTML(`
+            <div style="padding: 6px 10px; background-color: #0b0f19; color: #ffffff; border-radius: 8px; border: 1px solid #1e293b; font-size: 10px; font-family: sans-serif; font-weight: 500; opacity: 0.95; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
+              <span style="font-weight: bold; color: #06b6d4; display: block; margin-bottom: 2px;">3D Building</span>
+              <span>Height: ${Math.round(height)}m (~${floors} Floors)</span>
+            </div>
+          `)
+          .addTo(map);
+      });
+
+      map.on('mouseleave', '3d-buildings', () => {
+        map.getCanvas().style.cursor = '';
+        popupRef.current.remove();
+      });
+
+      // Interactivity: 3D Buildings Click
+      map.on('click', '3d-buildings', (e) => {
+        if (map.getLayoutProperty('3d-buildings', 'visibility') === 'none') return;
+        if (e.features.length === 0) return;
+
+        const feature = e.features[0];
+        const featureId = feature.id || `${e.lngLat.lng.toFixed(5)},${e.lngLat.lat.toFixed(5)}`;
+        
+        setSelectedBuildingId(featureId);
+        
+        // Update layer filter to highlight selected building
+        if (map.getLayer('3d-buildings-highlight')) {
+          map.setFilter('3d-buildings-highlight', ['==', ['id'], feature.id || '']);
+        }
+
+        const lat = e.lngLat.lat;
+        const lng = e.lngLat.lng;
+        const height = feature.properties?.render_height || 15;
+        const details = generateBuildingDetails(lng, lat, height);
+        setSelectedBuildingDetails(details);
+      });
+
+      // Map Click: Clear building selection when clicking outside
+      map.on('click', (e) => {
+        const features = map.queryRenderedFeatures(e.point, {
+          layers: ['3d-buildings', 'hotspot-pillars-layer', 'incident-points-layer']
+        });
+
+        if (features.length === 0) {
+          setSelectedBuildingId(null);
+          setSelectedBuildingDetails(null);
+          if (map.getLayer('3d-buildings-highlight')) {
+            map.setFilter('3d-buildings-highlight', ['==', ['id'], '']);
+          }
+        }
+      });
     });
 
     return () => {
@@ -370,6 +543,16 @@ export default function DigitalTwinMap({
     if (!isLoaded || !mapRef.current) return;
     if (mapRef.current.getLayer('3d-buildings')) {
       mapRef.current.setLayoutProperty('3d-buildings', 'visibility', showBuildings ? 'visible' : 'none');
+    }
+    if (mapRef.current.getLayer('3d-buildings-highlight')) {
+      mapRef.current.setLayoutProperty('3d-buildings-highlight', 'visibility', showBuildings ? 'visible' : 'none');
+    }
+    if (!showBuildings) {
+      setSelectedBuildingId(null);
+      setSelectedBuildingDetails(null);
+      if (mapRef.current.getLayer('3d-buildings-highlight')) {
+        mapRef.current.setFilter('3d-buildings-highlight', ['==', ['id'], '']);
+      }
     }
   }, [showBuildings, isLoaded]);
 
@@ -904,6 +1087,37 @@ export default function DigitalTwinMap({
     }
   };
 
+  // Telemetry Calculations
+  const activeHotspotsCount = useMemo(() => {
+    return Object.values(zoneIntensity).filter(meta => (meta.congestion_score || 0) >= 50).length;
+  }, [zoneIntensity]);
+
+  const avgCongestionScore = useMemo(() => {
+    const scores = Object.values(zoneIntensity).map(meta => meta.congestion_score || 0);
+    return scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1) : '0.0';
+  }, [zoneIntensity]);
+
+  const citationBreakdown = useMemo(() => {
+    const counts = {};
+    violationsData.forEach(v => {
+      let type = v.properties?.violation_types || v.properties?.violation_type || 'NO PARKING';
+      if (Array.isArray(type)) {
+        type = type[0];
+      }
+      type = String(type).trim().toUpperCase();
+      counts[type] = (counts[type] || 0) + 1;
+    });
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  }, [violationsData]);
+
+  const handleClearSelection = () => {
+    setSelectedBuildingId(null);
+    setSelectedBuildingDetails(null);
+    if (mapRef.current && mapRef.current.getLayer('3d-buildings-highlight')) {
+      mapRef.current.setFilter('3d-buildings-highlight', ['==', ['id'], '']);
+    }
+  };
+
   return (
     <div className="relative w-full h-full overflow-hidden rounded-xl border border-command-border">
       <div ref={mapContainerRef} className={className} />
@@ -1253,6 +1467,216 @@ export default function DigitalTwinMap({
           </div>
         )}
       </div>
+
+      {/* Live Weather Widget */}
+      {weatherData && (
+        <div className="absolute bottom-4 left-4 z-10 flex flex-col gap-1.5 rounded-xl bg-[#090D16]/80 p-3 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] border border-slate-800/80 backdrop-blur-lg text-[10px] text-slate-300 w-[170px]">
+          <div className="flex items-center justify-between border-b border-slate-800/50 pb-1.5 mb-1.5">
+            <span className="font-bold text-white uppercase tracking-wider text-[8px] flex items-center gap-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              Live Bengaluru
+            </span>
+            {weatherData.alert_level && weatherData.alert_level !== 'NONE' && (
+              <span className="px-1 py-0.5 rounded text-[7px] font-extrabold bg-red-950 text-red-400 border border-red-800/50">
+                {weatherData.alert_level} RISK
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2.5">
+            {weatherData.icon_url && (
+              <img src={weatherData.icon_url} alt="weather" className="h-8 w-8 object-contain shrink-0" />
+            )}
+            <div className="flex flex-col">
+              <span className="text-[13px] font-black text-white">{weatherData.temperature_c}°C</span>
+              <span className="text-[8px] text-slate-400 capitalize font-medium">{weatherData.description}</span>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-1.5 mt-1 pt-1.5 border-t border-slate-800/30 text-[8px] text-slate-400">
+            <div className="flex flex-col">
+              <span className="font-bold text-slate-500 uppercase tracking-wider text-[6px]">Wind</span>
+              <span className="text-slate-300 font-semibold">{weatherData.wind_speed_kmh} km/h</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="font-bold text-slate-500 uppercase tracking-wider text-[6px]">Humidity</span>
+              <span className="text-slate-300 font-semibold">{weatherData.humidity_pct}%</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Civic Command HUD Panel */}
+      <div className={`absolute top-4 right-4 z-10 flex flex-col rounded-xl bg-[#090D16]/80 p-3.5 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] border border-slate-800/80 backdrop-blur-lg text-[10px] text-slate-300 transition-all duration-300 ${hudExpanded ? 'w-[230px]' : 'w-[40px] h-[36px] overflow-hidden items-center justify-center p-0.5'}`}>
+        {!hudExpanded ? (
+          <button 
+            onClick={() => setHudExpanded(true)}
+            title="Expand HUD"
+            className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900/50 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer border border-slate-800/80"
+          >
+            <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        ) : (
+          <div className="flex flex-col gap-2.5 w-full">
+            <div className="flex items-center justify-between border-b border-slate-800/60 pb-2">
+              <span className="font-bold text-white uppercase tracking-wider text-[8px] flex items-center gap-1.5">
+                <svg className="h-3.5 w-3.5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Civic Telemetry HUD
+              </span>
+              <button 
+                onClick={() => setHudExpanded(false)}
+                title="Collapse HUD"
+                className="flex h-5 w-5 items-center justify-center rounded bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* KPI Cards Grid */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-slate-950/60 p-2 rounded-lg border border-slate-800/40">
+                <span className="text-[6px] text-slate-500 font-bold uppercase tracking-wider block">Avg Congestion</span>
+                <span className="text-[12px] font-black text-cyan-400 mt-0.5 block">{avgCongestionScore}%</span>
+              </div>
+              <div className="bg-slate-950/60 p-2 rounded-lg border border-slate-800/40">
+                <span className="text-[6px] text-slate-500 font-bold uppercase tracking-wider block">Active Hotspots</span>
+                <span className="text-[12px] font-black text-amber-500 mt-0.5 block">{activeHotspotsCount} Zones</span>
+              </div>
+              <div className="bg-slate-950/60 p-2 rounded-lg border border-slate-800/40">
+                <span className="text-[6px] text-slate-500 font-bold uppercase tracking-wider block">Total Citations</span>
+                <span className="text-[12px] font-black text-rose-500 mt-0.5 block">{violationsData.length}</span>
+              </div>
+              <div className="bg-slate-950/60 p-2 rounded-lg border border-slate-800/40">
+                <span className="text-[6px] text-slate-500 font-bold uppercase tracking-wider block">Flow Segments</span>
+                <span className="text-[12px] font-black text-emerald-500 mt-0.5 block">{trafficData?.features?.length || 0} Lines</span>
+              </div>
+            </div>
+
+            {/* Citations Breakdown */}
+            {citationBreakdown.length > 0 && (
+              <div className="flex flex-col gap-1 border-t border-slate-800/40 pt-2">
+                <span className="text-[7.5px] font-bold text-slate-400 uppercase tracking-wider mb-1 block">Citations Breakdown</span>
+                <div className="flex flex-col gap-1 max-h-[60px] overflow-y-auto pr-1">
+                  {citationBreakdown.slice(0, 3).map(([type, count]) => {
+                    const cleanType = type.replace('_', ' ').toLowerCase();
+                    return (
+                      <div key={type} className="flex justify-between items-center text-[7.5px] text-slate-400 font-semibold bg-slate-950/30 px-1.5 py-0.5 rounded border border-slate-900/30">
+                        <span className="capitalize">{cleanType}</span>
+                        <span className="text-slate-200 font-extrabold">{count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+          </div>
+        )}
+      </div>
+
+      {/* Building Intelligence Panel */}
+      {selectedBuildingDetails && (
+        <div className="absolute bottom-4 right-[224px] z-10 flex flex-col gap-2 rounded-xl bg-[#090D16]/85 p-3.5 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] border border-slate-800/80 backdrop-blur-lg text-[10px] text-slate-300 w-[230px] animate-fadeIn">
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-slate-800/60 pb-1.5">
+            <span className="font-bold text-white uppercase tracking-wider text-[8px] flex items-center gap-1.5">
+              <svg className="h-3.5 w-3.5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              Building Intel
+            </span>
+            <button 
+              onClick={handleClearSelection}
+              title="Close Panel"
+              className="flex h-5 w-5 items-center justify-center rounded bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer border border-slate-850"
+            >
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Details */}
+          <div className="flex flex-col gap-1.5">
+            <div>
+              <span className="text-[11px] font-black text-white block truncate" title={selectedBuildingDetails.name}>
+                {selectedBuildingDetails.name}
+              </span>
+              <span className="text-[8px] text-slate-450 block font-bold mt-0.5">
+                {selectedBuildingDetails.type}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-1.5 border-t border-slate-800/40 pt-1.5">
+              <div className="bg-slate-950/40 p-1.5 rounded border border-slate-900/30">
+                <span className="text-[6px] text-slate-500 font-bold uppercase tracking-wider block">Height</span>
+                <span className="text-[10px] font-extrabold text-slate-200 block mt-0.5">{selectedBuildingDetails.height}m</span>
+              </div>
+              <div className="bg-slate-950/40 p-1.5 rounded border border-slate-900/30">
+                <span className="text-[6px] text-slate-500 font-bold uppercase tracking-wider block">Est. Floors</span>
+                <span className="text-[10px] font-extrabold text-slate-200 block mt-0.5">{selectedBuildingDetails.floors}</span>
+              </div>
+            </div>
+
+            {/* Metrics */}
+            <div className="flex flex-col gap-1.5 border-t border-slate-800/40 pt-1.5">
+              {/* Congestion Index */}
+              <div className="flex flex-col gap-1">
+                <div className="flex justify-between text-[7px] font-bold uppercase tracking-wider">
+                  <span className="text-slate-400">Congestion Index</span>
+                  <span className={selectedBuildingDetails.congestionIndex >= 75 ? 'text-rose-500' : selectedBuildingDetails.congestionIndex >= 50 ? 'text-amber-500' : 'text-emerald-500'}>
+                    {selectedBuildingDetails.congestionIndex}%
+                  </span>
+                </div>
+                <div className="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden border border-slate-900">
+                  <div 
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      selectedBuildingDetails.congestionIndex >= 75 
+                        ? 'bg-rose-600' 
+                        : selectedBuildingDetails.congestionIndex >= 50 
+                        ? 'bg-amber-600' 
+                        : 'bg-emerald-600'
+                    }`} 
+                    style={{ width: `${selectedBuildingDetails.congestionIndex}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Parking slots & citations */}
+              <div className="grid grid-cols-2 gap-1.5">
+                <div className="flex flex-col bg-slate-950/45 p-1.5 rounded border border-slate-800/30">
+                  <span className="text-[6px] text-slate-500 font-bold uppercase tracking-wider block">Parking Slots</span>
+                  <span className="text-[10px] font-black text-cyan-400 block mt-0.5">{selectedBuildingDetails.parkingCapacity}</span>
+                </div>
+                <div className="flex flex-col bg-slate-950/45 p-1.5 rounded border border-slate-800/30">
+                  <span className="text-[6px] text-slate-500 font-bold uppercase tracking-wider block">Weekly Citations</span>
+                  <span className="text-[10px] font-black text-rose-500 block mt-0.5">{selectedBuildingDetails.weeklyCitations}</span>
+                </div>
+              </div>
+
+              {/* Priority */}
+              <div className="flex items-center justify-between bg-slate-950/40 p-1.5 rounded border border-slate-850">
+                <span className="text-[6.5px] text-slate-400 font-bold uppercase tracking-wider">Enforcement Priority</span>
+                <span className={`text-[8px] font-black px-1.5 py-0.5 rounded border ${
+                  selectedBuildingDetails.priority === 'CRITICAL'
+                    ? 'bg-rose-950/40 text-rose-400 border-rose-900/60 shadow-[0_0_6px_rgba(225,29,72,0.15)]'
+                    : selectedBuildingDetails.priority === 'HIGH'
+                    ? 'bg-amber-950/40 text-amber-500 border-amber-900/60'
+                    : selectedBuildingDetails.priority === 'MEDIUM'
+                    ? 'bg-emerald-950/40 text-emerald-500 border-emerald-900/60'
+                    : 'bg-slate-900 text-slate-350 border-slate-850'
+                }`}>
+                  {selectedBuildingDetails.priority}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
