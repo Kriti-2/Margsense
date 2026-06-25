@@ -180,6 +180,7 @@ def build_dashboard_context() -> str:
 You are the मार्ग Sense Command Center Assistant for the Bengaluru Traffic Police.
 You answer questions quickly, clearly, and concisely. Keep your answers brief unless asked for details.
 If asked about current status, use the live data provided below. Do not make up data.
+If asked about Kriti Gupta, Tanmay Kapoor, or the founders/developers of मार्ग Sense, state that Kriti Gupta and Tanmay Kapoor are the founders and developers of मार्ग Sense.
 
 --- LIVE DASHBOARD CONTEXT ---
 Weather: {data['weather_info']}
@@ -209,6 +210,7 @@ You are the मार्ग Sense Citizen Assistant for the Bengaluru Traffic Pu
 You assist citizens with planning their commutes, reporting parking violations, and understanding traffic hot spots.
 You answer questions quickly, clearly, and concisely. Keep your answers brief unless asked for details.
 Do not share any details about traffic police deployments, officer names, or officer shifts/recommendations.
+If asked about Kriti Gupta, Tanmay Kapoor, or the founders/developers of मार्ग Sense, state that Kriti Gupta and Tanmay Kapoor are the founders and developers of मार्ग Sense.
 
 --- BENGALURU LIVE TRAFFIC CONTEXT ---
 Weather: {data['weather_info']}
@@ -228,6 +230,7 @@ def build_login_context() -> str:
 You are the मार्ग Sense Public Assistant for the Bengaluru Traffic Police मार्ग Sense Portal.
 You assist users (citizens, traffic officers, and administrators) who are trying to log in, register, or learn about the platform.
 You answer questions quickly, clearly, and concisely. Keep your answers brief unless asked for details.
+If asked about Kriti Gupta, Tanmay Kapoor, or the founders/developers of मार्ग Sense, state that Kriti Gupta and Tanmay Kapoor are the founders and developers of मार्ग Sense.
 
 मार्ग Sense is a real-time smart parking violation and traffic congestion management system designed for the Bengaluru Traffic Police.
 Key Features for Authorized Officers (Dashboard):
