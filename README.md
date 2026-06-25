@@ -1,8 +1,8 @@
-# 🚦 MargSense (मार्ग Sense)
+# MargSense (मार्ग Sense)
 
 **Bengaluru's AI-Powered Parking Congestion Intelligence & Traffic Enforcement Platform**
 
-🚀 **Live Deployment Demo:** [http://20.205.124.191.nip.io/](http://20.205.124.191.nip.io/)
+**Live Deployment Demo:** [http://20.205.124.191.nip.io/](http://20.205.124.191.nip.io/)
 
 [![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
@@ -15,52 +15,68 @@ MargSense (मार्ग Sense) is a next-generation civic management and pred
 
 ---
 
-## 🌟 Key Capabilities
+## The Problem: Bengaluru's Reactive Traffic Crisis
 
-### 1. 🔮 MargPredict (Time-Series Forecasting)
-* Powered by **Facebook Prophet** and custom short-term regression models.
-* Predicts parking violations and congestion hotspots 24 hours in advance at high-risk zones across Bengaluru (Koramangala, HSR Layout, Indiranagar, MG Road, Silk Board, Whitefield).
-* Accounts for time of day, day of week, seasonal events, and local weather forecasts.
+Bengaluru's streets are choked by chronic gridlock, largely driven by illegal parking, double-parking, and arterial route obstructions:
 
-### 2. ⚡ Live Congestion & Route Optimization
-* **Real-time Replay Feed:** Replays 298,000+ real Bengaluru police parking violation records to simulate live streaming data.
-* **WebSocket Updates:** Real-time dashboard synchronization every 30 seconds via `/live/ws` without manual refreshes.
-* **Green Corridor Protector:** Runs spatial buffer analysis (using intersection data and live alerts) to detect blocking violations on critical routes for emergency vehicles (ambulances, fire trucks).
-* **AI Camera Monitor:** Visual simulation of CCTV traffic streams with real-time bounding boxes detecting illegal parking behaviors (double-parking, wrong-side parking, footpath obstruction).
-
-### 3. 🌱 Eco-Routing & Civic Standing
-* **Standard vs. Eco routing:** Connects to **OSRM (Open Source Routing Machine)** to compare standard routes with eco-friendly bypasses.
-* **Environmental Impact Calculator:** Computes fuel saved (liters) and $CO_2$ offsets (kg) for using eco routes, letting commuters log their savings to a database-backed profile.
-* **Civic Standing Score:** Analyzes vehicle history to rank drivers from **Clean Commuters** to **Chronic Offenders** with a dynamic points system (100 down to 10 points).
-
-### 4. 👮 Officer Shift Planner (Optimization)
-* Formulates a spatial-temporal optimization problem to maximize coverage of projected violations.
-* Recommends optimal deployment schedules, patrol assignments, and hot-zone counts.
-* Bridges the gap between predictive intelligence and ground enforcement.
-
-### 5. 🤖 Gemini LLM Integration
-* **Natural Language Copilot:** A chat assistant (`gemini-2.5-flash`) that allows traffic operators and officers to query live database stats, run scenario predictions, or ask for guidance using normal conversations.
-* **Localization:** Provides instant translations of alerts, notices, and dashboard labels into **Hindi** and **Kannada** using LLM context mapping.
+* **Chronic Gridlock:** Drivers lose hours daily to congestion. Illegal parking on narrow corridors restricts traffic flow, compounding gridlocks and costing the city massive economic losses.
+* **Emergency Corridor Blocks:** Critical routes for emergency vehicles (ambulances, fire engines) are frequently blocked by illegal parking, causing life-threatening delays.
+* **Reactive Law Enforcement:** Traffic police currently operate *reactively*—responding to bottlenecks only after they form. There is no predictive mechanism to allocate officers to hotspots *before* congestion spikes.
 
 ---
 
-## 📸 Application Screenshots
+## The Solution: MargSense
 
-### 🖥️ Main Dashboard & Command Center
+MargSense solves this by shifting Bengaluru's traffic management from **reactive policing** to **proactive prevention**. Powered by a dataset of **298,000+ real Bengaluru police parking violations**, MargSense acts as an intelligent command center:
+
+1. **For Traffic Officers:** It predicts where violations will occur 24 hours in advance and auto-generates optimized shift/patrol schedules so officers can prevent issues before they start.
+2. **For Citizens:** It provides dynamic eco-routing (reducing fuel waste and emissions), transparent vehicle offense lookup, and a civic score to incentivize responsible driving.
+
+---
+
+## Core Features
+
+To keep the platform focused and high-impact, MargSense implements 5 core capabilities:
+
+### 1. MargPredict (AI Forecasting)
+* Forecasts violation hotspots 24 hours in advance using **Facebook Prophet** and short-term regression.
+* Models temporal, weekly, and seasonal patterns to identify high-risk zones across Bengaluru.
+
+### 2. Live Emergency Corridor Protection
+* Uses real-time spatial buffer analysis to detect blocking violations on critical routes.
+* Immediately raises alerts for emergency vehicles (ambulances/fire trucks) to prevent gridlock.
+
+### 3. Officer Shift Optimization
+* Formulates a spatial-temporal optimization problem to maximize coverage of projected violations.
+* Recommends optimal patrol schedules and assignments to bridge predictive intelligence with ground enforcement.
+
+### 4. Eco-Routing & Civic Standing
+* Compares standard routes with eco-friendly bypasses using **OSRM** to calculate $CO_2$ offsets.
+* Ranks drivers from **Clean Commuters** to **Chronic Offenders** with a dynamic points system.
+
+### 5. Gemini LLM Copilot & Localization
+* Features a natural language assistant (`gemini-2.5-flash`) for traffic operators to query stats and run forecasts.
+* Automatically localizes dashboard notices and alerts into **Hindi** and **Kannada**.
+
+---
+
+## Application Screenshots
+
+### Main Dashboard & Command Center
 *Detailed real-time monitoring dashboard displaying live violation counts, active BBMP/BTP traffic alerts, connected Bengaluru road network lines, citizen vehicle lookup tool, and the eco-routing panel.*
 ![Main Dashboard](frontend/public/dashboard_screenshot.png)
 
-### 🔮 Predictive Forecaster (ParkPredict)
+### Predictive Forecaster (ParkPredict)
 *Hourly violation forecast projections for the next 24 hours across active Bengaluru zones, highlighting peak alert times and congestion levels.*
 ![Predictive Forecaster](frontend/public/predict_screenshot.png)
 
-### 👮 Shift Planner & Patrol Optimizer
+### Shift Planner & Patrol Optimizer
 *Spatial-temporal shift optimizer recommendations showing patrol allocations, coverage stats, and targeted officer deployment schedules.*
 ![Shift Planner](frontend/public/shift_planner_screenshot.png)
 
 ---
 
-## 📐 System Architecture
+## System Architecture
 
 ```mermaid
 graph TD
@@ -117,7 +133,7 @@ graph TD
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 margsense/
@@ -156,7 +172,7 @@ margsense/
 
 ---
 
-## 🚀 Setup & Installation
+## Setup & Installation
 
 ### Prerequisites
 * **Python** 3.10+
@@ -166,7 +182,7 @@ margsense/
 
 ---
 
-### 💻 Local Development Setup
+### Local Development Setup
 
 #### 1. Clone the repository and place the dataset
 Ensure you have the Flipkart Gridlock hackathon dataset `jan to may police violation_anonymized791b166 (2).csv` placed in the root directory.
@@ -212,7 +228,7 @@ npm run dev
 
 ---
 
-### 🐳 Full-Stack Docker Deployment
+### Full-Stack Docker Deployment
 
 You can build and spin up the complete containerized stack (Vite SPA, FastAPI, Celery, Redis) with a single command:
 
@@ -229,7 +245,7 @@ docker compose up --build
 
 ---
 
-## 🔑 Authentication & Role-Based Access
+## Authentication & Role-Based Access
 
 The application maintains a role-based authentication structure (`officer` vs `user` roles). By default in local development, auth checks are optional but can be fully enabled by setting `AUTH_ENABLED=true` in `backend/.env`.
 
@@ -244,7 +260,7 @@ On system startup, demo credentials are automatically seeded into the database:
 
 ---
 
-## 📡 REST API Reference
+## REST API Reference
 
 | Endpoint | Method | Role Required | Description |
 | :--- | :---: | :---: | :--- |
@@ -266,7 +282,7 @@ On system startup, demo credentials are automatically seeded into the database:
 
 ---
 
-## ⚡ Live Ingestion Trigger (Testing)
+## Live Ingestion Trigger (Testing)
 
 You can mock a real-time citizen or police dashboard trigger by running this curl command. The violation will immediately stream to all active WebSockets and map updates without reloading.
 
@@ -283,7 +299,7 @@ curl -X POST http://localhost:8000/ingest/violation \
 
 ---
 
-## 🛡️ Compliance & Production Roadmap
+## Compliance & Production Roadmap
 
 For high-scale production deployments (e.g., in partnership with BBMP and Bangalore Traffic Police), see the following detailed design specs:
 * **Real-time API & Hardware Ingestion:** See [backend/LIVE.md](backend/LIVE.md).
