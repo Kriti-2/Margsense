@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { api } from '../api/client';
 import LiveStatusBar from '../components/LiveStatusBar';
 import { useLiveFeed } from '../hooks/useLiveFeed';
+import { useIsMobile, checkIsMobile } from '../hooks/useIsMobile';
 
 const CAMERAS = [
   { 
@@ -86,8 +87,9 @@ export default function CameraMonitor() {
   const videoRefs = useRef({});
   const sharedCanvasRef = useRef(null);
 
-  // Real-time TensorFlow.js Model states
-  const [tfStatus, setTfStatus] = useState('fallback'); // default to lightweight lane emulation
+  // Real-time TensorFlow.js Model states — force fallback on mobile to prevent GPU crashes
+  const [tfStatus, setTfStatus] = useState(() => checkIsMobile() ? 'fallback' : 'fallback');
+  const isMobile = useIsMobile();
   const [model, setModel] = useState(null);
   const [realDetections, setRealDetections] = useState({});
 
@@ -125,6 +127,12 @@ export default function CameraMonitor() {
   // 1. Dynamic script verification & COCO-SSD loading
   useEffect(() => {
     if (tfStatus !== 'initializing') return;
+    // Block TF.js initialization on mobile devices
+    if (checkIsMobile()) {
+      setTfStatus('fallback');
+      addLog("Mobile device detected — using lightweight lane emulator.", "info");
+      return;
+    }
     async function initTF() {
       try {
         addLog("Initializing neural network environment...", "info");
@@ -695,7 +703,7 @@ export default function CameraMonitor() {
                     loop
                     muted
                     playsInline
-                    preload="metadata"
+                    preload={isMobile ? 'metadata' : 'auto'}
                     className="absolute inset-0 h-full w-full object-cover opacity-60"
                   />
 

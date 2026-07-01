@@ -14,7 +14,8 @@ export function useLiveFeed(onTick) {
     let ws = null;
     let reconnectTimeout = null;
     let reconnectDelay = 1000;
-    const maxDelay = 10000;
+    const isMobileDevice = typeof window !== 'undefined' && window.innerWidth < 768;
+    const maxDelay = isMobileDevice ? 30000 : 10000;
     let isMounted = true;
 
     function connect() {

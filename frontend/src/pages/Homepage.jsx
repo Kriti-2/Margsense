@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useLiveFeed } from '../hooks/useLiveFeed';
 import { useAuth } from '../context/AuthContext';
+import { useIsMobile } from '../hooks/useIsMobile';
 import KPICard from '../components/KPICard';
 import { useTranslation, TranslatedText } from '../context/LanguageContext';
 import PageLoader from '../components/PageLoader';
@@ -160,9 +161,9 @@ function HeroSection({ analytics, lastTick, connected, isOfficer }) {
 
       {/* ── Stats strip — white card at the bottom ──────────────────────── */}
       <div className="mx-4 md:mx-6 bg-white rounded-b-2xl shadow-lg border border-gray-100 overflow-x-auto no-scrollbar">
-        <div className="flex items-stretch min-w-max md:min-w-0">
+        <div className="flex items-stretch flex-wrap sm:flex-nowrap">
           {/* LIVE indicator */}
-          <div className="flex items-center gap-3 px-5 py-3.5 border-r border-gray-100">
+          <div className="flex items-center gap-3 px-5 py-3.5 border-r border-gray-100 shrink-0">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#EBF2F5] shrink-0">
               <span className="h-3 w-3 rounded-full bg-[#8A9E85] animate-pulse block" />
             </div>
@@ -247,6 +248,7 @@ export default function Homepage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [mapView, setMapView] = useState('2d');
+  const isMobile = useIsMobile();
   const [trafficData, setTrafficData] = useState(null);
 
   const [violationsLastHourHistory, setViolationsLastHourHistory] = useState([12, 16, 14, 19, 15, 23, 18, 20]);
@@ -483,7 +485,8 @@ export default function Homepage() {
                 <p className="text-xs text-gray-400"><TranslatedText text="Real-time visualization of congestion levels and violation hotspots" /></p>
               </div>
               
-              {/* View Mode Toggle */}
+              {/* View Mode Toggle — hidden on mobile to prevent WebGL crashes */}
+              {!isMobile && (
               <div className="flex bg-gray-100 rounded-lg p-0.5 border border-gray-200 shrink-0 self-start sm:self-center">
                 <button
                   onClick={() => setMapView('2d')}
@@ -506,6 +509,7 @@ export default function Homepage() {
                   <TranslatedText text="3D Digital Twin" />
                 </button>
               </div>
+              )}
             </div>
 
             <Suspense fallback={
@@ -513,7 +517,7 @@ export default function Homepage() {
                 <TranslatedText text="Initializing live mapping view..." />
               </div>
             }>
-              {mapView === '2d' ? (
+              {(mapView === '2d' || isMobile) ? (
                 <HeatMap data={heatmap} zoneIntensity={heatmap?.zone_intensity} className="h-[300px] sm:h-[400px] md:h-[450px]" />
               ) : (
                 <DigitalTwinMap 

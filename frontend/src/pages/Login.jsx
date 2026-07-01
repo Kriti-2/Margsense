@@ -117,7 +117,7 @@ export default function Login() {
   return (
     <div className="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center py-6 transition-colors duration-300 bg-neutral-950">
       
-      {/* Desktop Video Background (4K Loop, Hidden on Mobile) */}
+      {/* Desktop Video Background (4K 60fps, Hidden on Mobile) */}
       <video
         autoPlay
         loop
@@ -128,15 +128,15 @@ export default function Login() {
         <source src="/traffic_video/12926930_3840_2160_60fps.mp4" type="video/mp4" />
       </video>
 
-      {/* Mobile Video Background (Brighter, Hidden on Desktop) */}
+      {/* Mobile Video Background (1080p 30fps — lighter for mobile devices) */}
       <video
         autoPlay
         loop
         muted
         playsInline
-        className="block sm:hidden fixed inset-0 z-0 h-full w-full object-cover transform-gpu will-change-[filter] transition-all duration-500 brightness-[0.52] contrast-[1.05]"
+        className="block sm:hidden fixed inset-0 z-0 h-full w-full object-cover transform-gpu brightness-[0.50] contrast-[1.05]"
       >
-        <source src="/traffic_video/12926930_3840_2160_60fps.mp4" type="video/mp4" />
+        <source src="/traffic_video/13654799_1920_1080_30fps.mp4" type="video/mp4" />
       </video>
 
       {/* Centered High-Fidelity Login Card (GPU accelerated to avoid lag over 4K video) */}
@@ -425,32 +425,32 @@ export default function Login() {
 
       {/* Floating Glass Status/Stats Bar at Bottom */}
       <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-10 w-full max-w-[420px] px-4 select-none pointer-events-auto">
-        <div className="flex items-center justify-around rounded-2xl border border-white/15 bg-white/5 px-4 py-2.5 text-white shadow-[0_15px_35px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.15)] backdrop-blur-xl">
-          <div className="flex items-center gap-1.5">
-            <span className="relative flex h-1.5 w-1.5">
+        <div className="flex items-center justify-around rounded-2xl border border-white/15 bg-white/5 px-2 sm:px-4 py-2 sm:py-2.5 text-white shadow-[0_15px_35px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.15)] backdrop-blur-xl gap-1">
+          <div className="flex items-center gap-1 sm:gap-1.5">
+            <span className="relative flex h-1.5 w-1.5 shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span>
             </span>
-            <span className="text-[9px] text-white/60 font-bold uppercase tracking-wider">Violations</span>
-            <span className="text-xs text-red-400 font-black">791+</span>
+            <span className="text-[8px] sm:text-[9px] text-white/60 font-bold uppercase tracking-wider">Violations</span>
+            <span className="text-[10px] sm:text-xs text-red-400 font-black">791+</span>
           </div>
-          <div className="h-4 w-px bg-white/10"></div>
-          <div className="flex items-center gap-1.5">
-            <span className="relative flex h-1.5 w-1.5">
+          <div className="h-4 w-px bg-white/10 shrink-0"></div>
+          <div className="flex items-center gap-1 sm:gap-1.5">
+            <span className="relative flex h-1.5 w-1.5 shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
             </span>
-            <span className="text-[9px] text-white/60 font-bold uppercase tracking-wider">Active Zones</span>
-            <span className="text-xs text-green-400 font-black">6</span>
+            <span className="text-[8px] sm:text-[9px] text-white/60 font-bold uppercase tracking-wider hidden xs:inline">Zones</span>
+            <span className="text-[10px] sm:text-xs text-green-400 font-black">6</span>
           </div>
-          <div className="h-4 w-px bg-white/10"></div>
-          <div className="flex items-center gap-1.5">
-            <span className="relative flex h-1.5 w-1.5">
+          <div className="h-4 w-px bg-white/10 shrink-0"></div>
+          <div className="flex items-center gap-1 sm:gap-1.5">
+            <span className="relative flex h-1.5 w-1.5 shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-500 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-teal-500"></span>
             </span>
-            <span className="text-[9px] text-white/60 font-bold uppercase tracking-wider">Forecast</span>
-            <span className="text-xs text-teal-400 font-black">24h</span>
+            <span className="text-[8px] sm:text-[9px] text-white/60 font-bold uppercase tracking-wider">Forecast</span>
+            <span className="text-[10px] sm:text-xs text-teal-400 font-black">24h</span>
           </div>
         </div>
       </div>

@@ -97,17 +97,17 @@ export default function ChatBot({ context = 'dashboard' }) {
       {/* Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-[9999] cursor-pointer group select-none transition-all duration-300 active:scale-95 focus:outline-none"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[9999] cursor-pointer group select-none transition-all duration-300 active:scale-95 focus:outline-none"
         aria-label="Toggle AI Assistant"
       >
         {isOpen ? (
-          <div className="w-16 h-16 rounded-full bg-gradient-to-r from-[#5E8599] to-[#8FAEB9] text-white shadow-[0_4px_20px_rgba(94,133,153,0.4)] flex items-center justify-center transition-all duration-300 hover:scale-110">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-r from-[#5E8599] to-[#8FAEB9] text-white shadow-[0_4px_20px_rgba(94,133,153,0.4)] flex items-center justify-center transition-all duration-300 hover:scale-110">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 relative z-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </div>
         ) : (
-          <div className="relative w-[78px] h-[78px] flex items-center justify-center transition-all duration-300">
+          <div className="relative w-[60px] h-[60px] sm:w-[78px] sm:h-[78px] flex items-center justify-center transition-all duration-300">
             {/* Pulsing glow ring for popping effect */}
             <span className="absolute inset-2 rounded-full bg-[#5E8599] opacity-20 group-hover:opacity-40 animate-ping pointer-events-none"></span>
             
@@ -211,7 +211,7 @@ export default function ChatBot({ context = 'dashboard' }) {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 w-80 sm:w-96 h-[500px] bg-white dark:bg-gray-950 border border-gray-150 dark:border-white/10 rounded-2xl shadow-2xl flex flex-col z-[9999] overflow-hidden animate-fadeIn">
+        <div className="fixed bottom-20 sm:bottom-24 right-2 sm:right-6 w-[calc(100vw-16px)] sm:w-96 h-[70vh] sm:h-[500px] bg-white dark:bg-gray-950 border border-gray-150 dark:border-white/10 rounded-2xl shadow-2xl flex flex-col z-[9999] overflow-hidden animate-fadeIn">
           {/* Header */}
           <div className="bg-gradient-to-r from-[#5E8599] to-[#4A6C7D] p-4 text-white flex items-center gap-3 shadow-sm">
             <div className="bg-white/20 p-2 rounded-full">

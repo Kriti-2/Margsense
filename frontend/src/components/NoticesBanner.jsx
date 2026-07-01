@@ -350,7 +350,7 @@ export default function NoticesBanner() {
         )}
 
         {/* Content row */}
-        <div className="relative z-20 mx-auto max-w-7xl flex items-center justify-between gap-4 px-4 sm:px-6 py-3">
+        <div className="relative z-20 mx-auto max-w-7xl flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 py-2.5 sm:py-3">
 
           {/* Left: live dot + type badge + text */}
           <div className="flex-1 flex items-center gap-3 overflow-hidden cursor-pointer min-w-0"
@@ -394,16 +394,16 @@ export default function NoticesBanner() {
           {/* Right: controls */}
           <div className="flex items-center gap-2 shrink-0">
 
-            {/* Language toggle pill */}
+            {/* Language toggle pill — hidden on mobile */}
             <button onClick={(e) => { e.stopPropagation(); toggleLang(); }}
-              className="flex items-center justify-center h-8 rounded-lg border border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/5 px-2.5 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/10 cursor-pointer transition-colors"
+              className="hidden sm:flex items-center justify-center h-8 rounded-lg border border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/5 px-2.5 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/10 cursor-pointer transition-colors"
               title="Switch Language">
               <span>{lang.toUpperCase()}</span>
             </button>
 
-            {/* Voice Read Aloud button */}
+            {/* Voice Read Aloud button — hidden on mobile */}
             <button onClick={(e) => { e.stopPropagation(); speakNotice(cur.title, cur.message); }}
-              className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+              className={`hidden sm:block p-1.5 rounded-lg border transition-all cursor-pointer ${
                 isSpeaking ? 'bg-command-accent/15 border-command-accent/40 text-command-accent' 
                   : 'border-gray-200 dark:border-white/10 bg-white/50 dark:bg-white/5 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
               title={isSpeaking ? 'Stop Reading' : 'Read Aloud'}>
